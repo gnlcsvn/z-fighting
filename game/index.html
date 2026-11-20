@@ -1,0 +1,68 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>z-fighting game</title>
+<meta name="description" content="Two bodies in the same place. Hold more of the picture than the machine.">
+<style>
+/* Wie die Website: Papier, Festbreitenschrift, Blau und Rot, eine Bildschirmseite ohne Scrollen. Nur ein helles Bild. */
+:root { --papier: #fbfaf7; --tinte: #1b1b1d; --leise: #74736f; --knopf: #29292c; --blau: #2d3c96; --rot: #d7463c; color-scheme: light; }
+* { box-sizing: border-box; }
+html { font-size: 14px; height: 100dvh; overflow: hidden; overscroll-behavior: none; }
+body {
+  margin: 0; height: 100%; display: flex; flex-direction: column; align-items: center;
+  padding-left: max(16px, env(safe-area-inset-left, 0px)); padding-right: max(16px, env(safe-area-inset-right, 0px));
+  background: var(--papier); color: var(--tinte); font-family: "Courier Prime", "Courier New", Courier, ui-monospace, monospace; line-height: 1.5;
+  -webkit-user-select: none; user-select: none;
+}
+header, main { width: 100%; max-width: 40rem; }
+header { flex: none; display: flex; justify-content: space-between; gap: 1rem; padding: 1rem 0 0.6rem; }
+.leise { color: var(--leise); }
+main { flex: 1; min-height: 0; display: flex; flex-direction: column; }
+.buehne { flex: 1; min-height: 0; container-type: size; display: flex; align-items: center; justify-content: center; }
+canvas { display: block; width: min(100cqw, 100cqh); height: min(100cqw, 100cqh); touch-action: none; cursor: grab; image-rendering: pixelated; }
+.kopf { flex: none; display: flex; justify-content: space-between; gap: 1rem; padding-top: 0.6rem; }
+.balken { flex: none; display: flex; height: 6px; margin: 0.5rem 0 0.3rem; }
+.balken span { flex: 1 1 0; min-width: 0; transition: flex-grow 0.12s linear; }
+#du { background: var(--rot); } #sie { background: var(--blau); }
+.zahlen { flex: none; display: flex; justify-content: space-between; }
+.zahlen .du { color: var(--rot); } .zahlen .sie { color: var(--blau); }
+.unten { flex: none; height: 10.5rem; padding: 0.9rem 0 1rem; }
+.unten p { margin: 0 0 0.9rem; max-width: 46ch; }
+button { font: inherit; height: 30px; padding: 0 0.9rem; color: var(--papier); background: var(--knopf); border: 1px solid var(--knopf); border-radius: 2px; cursor: pointer; }
+button:focus-visible, canvas:focus-visible { outline: 1px solid var(--blau); outline-offset: 3px; }
+body[data-zustand="lauf"] .unten p { color: var(--leise); }
+@media (max-width: 640px) { html { font-size: 13px; } }
+@media (prefers-reduced-motion: reduce) { .balken span { transition: none; } }
+@media (orientation: landscape) and (max-height: 520px) {
+  main { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); grid-template-rows: auto auto auto minmax(0, 1fr); column-gap: 1.5rem; }
+  .buehne { grid-row: 1 / 5; } .unten { height: auto; }
+}
+
+/* Kopfzeile: Titel links, Seiten rechts */
+header nav { display: flex; gap: 1.3rem; }
+header nav a { color: var(--leise); }
+header nav a[aria-current="page"], header .titel { color: var(--tinte); }
+header a { text-decoration: none; } header a:hover { text-decoration: underline; }
+[hidden] { display: none !important; }
+</style>
+</head>
+<body>
+<header>
+  <a href="../" class="titel">z-fighting</a>
+  <nav aria-label="pages"><a href="./" aria-current="page">game</a><a href="../about.html">about</a></nav>
+</header>
+<main>
+  <div class="buehne"><canvas id="feld" width="600" height="600" tabindex="0" aria-label="Two bodies in the same place. Drag to turn the red one."></canvas></div>
+  <div class="kopf"><span id="form"></span><span class="leise" id="serie"></span></div>
+  <div class="balken" aria-hidden="true"><span id="du"></span><span id="sie"></span></div>
+  <div class="zahlen"><span class="du">you <span id="duZahl">50</span></span><span class="sie"><span id="sieZahl">50</span> machine</span></div>
+  <div class="unten">
+    <p id="zeile" role="status"></p>
+    <button type="button" id="knopf">start</button>
+  </div>
+</main>
+<script src="spiel.js"></script>
+</body>
+</html>

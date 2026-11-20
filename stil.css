@@ -134,3 +134,14 @@ figcaption { align-items: center; gap: 0.5rem 1rem; }
   .unten { height: auto; }
   .regler { grid-template-columns: 1fr 1fr; gap: 0.2rem 1.5rem; }
 }
+
+/* Kopfzeile: Titel links, Seiten rechts */
+header nav { display: flex; gap: 1.3rem; }
+header nav a { color: var(--leise); }
+header nav a[aria-current="page"], header .titel { color: var(--tinte); }
+/* Textseiten (about) duerfen scrollen */
+html.frei { height: auto; overflow: auto; }
+html.frei body { height: auto; min-height: 100dvh; }
+.seite { max-width: 46ch; padding: 2.5rem 0 4rem; }
+.seite p { margin: 0 0 1.1rem; }
+.seite .blau { color: var(--blau); } .seite .rot { color: var(--rot); }
