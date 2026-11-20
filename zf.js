@@ -79,6 +79,25 @@
     return N;
   }
 
+  // Ohne Browser (node baue_modelle.js): nur Formen und Netz herausgeben, nichts zeichnen.
+  if (typeof document === "undefined") { module.exports = { FORMEN: FORMEN, netz: netz, drehe: drehe, GROESSE: GROESSE, KIPP: alle.kipp }; return; }
+
+  // ---------------------------------------------------------------- AR: der Betrachter des Telefons, ohne Marke
+  // Nur wo die Seite einen Ordner mit Modellen nennt (data-ar) und das Geraet einen Betrachter hat:
+  // iOS AR Quick Look (.usdz), Android Scene Viewer (.glb). Die Modelle baut baue_modelle.js.
+  var AR_ORT = document.querySelector("[data-ar]"), AR = "";
+  if (AR_ORT) {
+    var probe = document.createElement("a");
+    if (probe.relList && probe.relList.supports && probe.relList.supports("ar")) AR = "ios";
+    else if (/Android/i.test(navigator.userAgent)) AR = "android";
+  }
+  function arStart(name, titel) {
+    var url = new URL(AR_ORT.getAttribute("data-ar") + name + (AR === "ios" ? ".usdz" : ".glb"), location.href).href;
+    if (AR === "ios") { var a = document.createElement("a"); a.rel = "ar"; a.href = url; a.appendChild(document.createElement("img")); a.click(); return; }
+    location.href = "intent://arvr.google.com/scene-viewer/1.0?file=" + encodeURIComponent(url) + "&mode=ar_preferred&title=" + encodeURIComponent(titel) +
+      "#Intent;scheme=https;package=com.google.android.googlequicksearchbox;action=android.intent.action.VIEW;S.browser_fallback_url=" + encodeURIComponent(location.href) + ";end;";
+  }
+
   // ---------------------------------------------------------------- Regler (je Werk ein Feld, alle zeigen dieselben Werte)
   var START = { bits: 16, kipp: 0.22, n: 140, hub: 0, fein: 1, kopie: true };
   var REGLER = [
@@ -102,6 +121,13 @@
     ansicht.setAttribute("role", "group"); ansicht.setAttribute("aria-label", "view");
     for (var m = 0; m < modi.length; m++) ansicht.appendChild(modi[m]);
     leiste.appendChild(ansicht);
+    if (AR) {
+      var ar = el("button", "ar", "ar"), kopfzeile = fig.querySelector("figcaption > span");
+      var titel = kopfzeile ? kopfzeile.textContent.replace(/^\d+\s*/, "") : "";
+      ar.type = "button"; ar.setAttribute("aria-label", "view " + titel + " in AR");
+      ar.addEventListener("click", function () { arStart(fig.getAttribute("data-form"), titel); });
+      leiste.appendChild(ar);
+    }
     var auf = el("button", "controls", "auf"); auf.type = "button"; auf.setAttribute("aria-controls", box.id);
     auf.addEventListener("click", function () { unten = unten === "regler" ? "" : "regler"; lagen.forEach(function (l) { l(); }); });
     leiste.appendChild(auf);

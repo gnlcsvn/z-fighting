@@ -118,10 +118,11 @@ figcaption { align-items: center; gap: 0.5rem 1rem; }
 .wahl span { margin-left: 0.3rem; }
 .schalter { margin-left: auto; align-items: center; gap: 0.7rem; }
 .ansicht { display: inline-flex; border: 1px solid var(--knopf); border-radius: 2px; overflow: hidden; }
-.ansicht button, .schalter .auf { height: 28px; padding: 0 0.6rem; color: var(--knopf); }
-.schalter .auf { height: 30px; border: 1px solid var(--knopf); border-radius: 2px; }
+.ansicht button, .schalter .auf, .schalter .ar { height: 28px; padding: 0 0.6rem; color: var(--knopf); }
+.schalter .auf, .schalter .ar { height: 30px; border: 1px solid var(--knopf); border-radius: 2px; }
+.schalter .ar { margin-left: auto; }
 .ansicht button[aria-pressed="true"], .schalter .auf[aria-expanded="true"] { background: var(--knopf); color: var(--papier); text-decoration: none; }
-.wahl button:hover, .ansicht button:hover, .schalter .auf:hover { text-decoration: none; }
+.wahl button:hover, .ansicht button:hover, .schalter .auf:hover, .schalter .ar:hover { text-decoration: none; }
 @media (hover: hover) {
   .wahl button:hover { color: var(--leise); }
   .ansicht button[aria-pressed="false"]:hover, .schalter .auf[aria-expanded="false"]:hover { background: color-mix(in srgb, var(--knopf) 10%, transparent); }
