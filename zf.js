@@ -88,8 +88,10 @@
   var AR_ORT = document.querySelector("[data-ar]"), AR = "";
   if (AR_ORT) {
     var probe = document.createElement("a");
+    var ua = navigator.userAgent, ios = /iPad|iPhone|iPod/.test(ua) || (navigator.platform === "MacIntel" && navigator.maxTouchPoints > 1);
     if (probe.relList && probe.relList.supports && probe.relList.supports("ar")) AR = "ios";
-    else if (/Android/i.test(navigator.userAgent)) AR = "android";
+    else if (ios && /CriOS\/|FxiOS\/|EdgiOS\/|GSA\/|DuckDuckGo\//.test(ua)) AR = "ios";   // Chrome, Firefox usw. auf iOS melden "ar" nicht, oeffnen Quick Look aber
+    else if (/Android/i.test(ua)) AR = "android";
   }
   function arStart(name, titel) {
     var url = new URL(AR_ORT.getAttribute("data-ar") + name + (AR === "ios" ? ".usdz" : ".glb"), location.href).href;
