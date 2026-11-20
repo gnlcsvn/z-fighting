@@ -48,7 +48,7 @@ window.addEventListener("unhandledrejection", e => { meldung.textContent = "erro
 document.getElementById("los").addEventListener("click", async () => {
   try {
     meldung.textContent = "starting camera ...";
-    const ar = new MindARThree({ container: document.getElementById("buehne"), imageTargetSrc: "ziel.mind", uiScanning: "no", uiLoading: "no", filterMinCF: 0.0005, filterBeta: 0.01 });
+    const ar = new MindARThree({ container: document.getElementById("buehne"), imageTargetSrc: (new URLSearchParams(location.search).get("ziel") || "ziel") + ".mind", uiScanning: "no", uiLoading: "no", filterMinCF: 0.0005, filterBeta: 0.01 });
     const { renderer, scene, camera } = ar;
     scene.add(new THREE.HemisphereLight(0xffffff, 0x8a8985, 1.6)); const licht = new THREE.DirectionalLight(0xffffff, 1.4); licht.position.set(-0.6, 0.8, 1); scene.add(licht);
     const anker = ar.addAnchor(0), { aussen, koerper } = modell(); anker.group.add(aussen);

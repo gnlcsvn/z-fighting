@@ -13,9 +13,10 @@ class H(SimpleHTTPRequestHandler):
     def __init__(s, *a, **k): super().__init__(*a, directory=ORDNER, **k)
 
     def do_POST(s):
-        if s.path != "/ziel.mind": s.send_error(404); return
+        name = os.path.basename(s.path)
+        if not name.endswith(".mind"): s.send_error(404); return
         n = int(s.headers.get("Content-Length", 0)); daten = s.rfile.read(n)
-        with open(os.path.join(ORDNER, "ziel.mind"), "wb") as f: f.write(daten)
+        with open(os.path.join(ORDNER, name), "wb") as f: f.write(daten)
         s.send_response(200); s.end_headers(); s.wfile.write(str(len(daten)).encode())
 
 
