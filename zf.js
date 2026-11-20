@@ -90,7 +90,7 @@
     var probe = document.createElement("a");
     var ua = navigator.userAgent, ios = /iPad|iPhone|iPod/.test(ua) || (navigator.platform === "MacIntel" && navigator.maxTouchPoints > 1);
     if (probe.relList && probe.relList.supports && probe.relList.supports("ar")) AR = "ios";
-    else if (ios && /CriOS\/|FxiOS\/|EdgiOS\/|GSA\/|DuckDuckGo\//.test(ua)) AR = "ios";   // Chrome, Firefox usw. auf iOS melden "ar" nicht, oeffnen Quick Look aber
+    else if (ios && /CriOS\/|EdgiOS\/|GSA\/|DuckDuckGo\//.test(ua)) AR = "ios";   // Chrome usw. auf iOS melden "ar" nicht, oeffnen Quick Look aber. Firefox laedt die Datei nur herunter: kein Knopf
     else if (/Android/i.test(ua)) AR = "android";
   }
   function arStart(name, titel) {
