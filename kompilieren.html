@@ -2,19 +2,24 @@
 <html lang="de"><head><meta charset="utf-8"><title>Bildmarke erzeugen</title></head>
 <body style="font-family: monospace">
 <p id="stand">lade ...</p>
-<!-- Erzeugt ziel.mind aus ziel.png (Merkmale fuer die Bilderkennung) und schickt die Datei an server.py. -->
+<!-- Erzeugt ziel.mind (Merkmale fuer die Bilderkennung) und schickt die Datei an server.py.
+     Zielbilder: ?bilder=ziel_foto,ziel (Standard). Jedes Bild wird ein eigenes Ziel (Index in dieser Reihenfolge),
+     alle zeigen denselben Ausschnitt des Blatts: 176 x 144 mm um das Motiv. -->
+<script>
+  // In einem verdeckten Fenster steht requestAnimationFrame still, die Rechnung haengt dann. Ersatz ueber Zeitgeber.
+  if (document.hidden) window.requestAnimationFrame = f => setTimeout(() => f(performance.now()), 0);
+</script>
 <script type="module">
 import { Compiler } from "https://cdn.jsdelivr.net/npm/mind-ar@1.2.5/dist/mindar-image.prod.js";
 const stand = document.getElementById("stand");
 try {
-  const name = new URLSearchParams(location.search).get("name") || "ziel";
-  const bild = new Image(); bild.src = name + ".png"; await bild.decode();
+  const namen = (new URLSearchParams(location.search).get("bilder") || "ziel_foto,ziel").split(",");
+  const bilder = await Promise.all(namen.map(async n => { const b = new Image(); b.src = n + ".png"; await b.decode(); return b; }));
   const c = new Compiler();
-  const daten = await c.compileImageTargets([bild], p => { stand.textContent = "rechne " + p.toFixed(0) + " %"; });
+  const daten = await c.compileImageTargets(bilder, p => { stand.textContent = "rechne " + p.toFixed(0) + " %"; });
   const puffer = await c.exportData();
-  const r = await fetch("/" + name + ".mind", { method: "POST", body: puffer });
-  const merkmale = daten[0].matchingData.reduce((s, m) => s + m.maximaPoints.length + m.minimaPoints.length, 0);
-  window.ergebnis = { bytes: await r.text(), merkmale, spurBilder: daten[0].trackingData.length };
+  const r = await fetch("/ziel.mind", { method: "POST", body: puffer });
+  window.ergebnis = { bytes: await r.text(), ziele: namen, merkmale: daten.map(d => d.matchingData.reduce((s, m) => s + m.maximaPoints.length + m.minimaPoints.length, 0)) };
   stand.textContent = "fertig: " + JSON.stringify(window.ergebnis);
 } catch (e) { window.ergebnis = { fehler: String(e) }; stand.textContent = "Fehler: " + e; }
 </script>

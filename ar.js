@@ -7,7 +7,7 @@ import * as THREE from "three";
 import { MindARThree } from "mindar-image-three";
 
 const BLAU = 0x3454aa, ROT = 0xd6483a;
-const ZIEL_BREITE_MM = 176, MOTIV_BREITE_MM = 168;                 // Ausschnitt ziel.png und Breite der Zeichnung darin
+const ZIEL_BREITE_MM = 176, MOTIV_BREITE_MM = 168, ZIELE = 2;                 // Ausschnitt ziel.png und Breite der Zeichnung darin
 
 function flasche(u, v, a = 3.2) {
   const r = a + Math.cos(u / 2) * Math.sin(v) - Math.sin(u / 2) * Math.sin(2 * v);
@@ -47,7 +47,7 @@ const meldung = document.getElementById("meldung"), zeile = document.getElementB
 const schritt = t => { meldung.textContent += (meldung.textContent ? "\n" : "") + t; };
 window.addEventListener("error", e => schritt("error: " + e.message));
 window.addEventListener("unhandledrejection", e => schritt("error: " + (e.reason && e.reason.message || e.reason)));
-schritt("v3 ready, secure " + window.isSecureContext + ", camera api " + !!(navigator.mediaDevices && navigator.mediaDevices.getUserMedia));
+schritt("v4 ready, secure " + window.isSecureContext + ", camera api " + !!(navigator.mediaDevices && navigator.mediaDevices.getUserMedia));
 document.getElementById("los").addEventListener("click", async () => {
   try {
     schritt("1 asking for camera");
@@ -59,16 +59,36 @@ document.getElementById("los").addEventListener("click", async () => {
     const ar = new MindARThree({ container: document.getElementById("buehne"), imageTargetSrc: (new URLSearchParams(location.search).get("ziel") || "ziel") + ".mind", uiScanning: "no", uiLoading: "no", filterMinCF: 0.0005, filterBeta: 0.01 });
     const { renderer, scene, camera } = ar;
     scene.add(new THREE.HemisphereLight(0xffffff, 0x8a8985, 1.6)); const licht = new THREE.DirectionalLight(0xffffff, 1.4); licht.position.set(-0.6, 0.8, 1); scene.add(licht);
-    const anker = ar.addAnchor(0), { aussen, koerper } = modell(); anker.group.add(aussen);
-    anker.onTargetFound = () => { zeile.textContent = "tap to turn"; };
-    anker.onTargetLost = () => { zeile.textContent = "looking for the print"; };
+    const koerper = [];                                             // je Ziel (0 = Foto des Plots, 1 = Rendering) dasselbe Modell
+    for (let i = 0; i < ZIELE; i++) {
+      const anker = ar.addAnchor(i), m = modell(); anker.group.add(m.aussen); koerper.push(m.koerper);
+      anker.onTargetFound = () => { zeile.textContent = "tap to turn"; window.zfGefunden = i; };
+      anker.onTargetLost = () => { zeile.textContent = "looking for the print"; };
+    }
     let dreht = false; document.getElementById("buehne").addEventListener("click", () => { dreht = !dreht; });
     schritt("4 starting tracker");
     const warte = setTimeout(() => schritt("still starting after 20 s"), 20000);
     await ar.start(); clearTimeout(warte);
     schritt("5 running");
     document.getElementById("start").hidden = true; zeile.hidden = false;
-    renderer.setAnimationLoop(() => { if (dreht) koerper.rotation.z += 0.01; renderer.render(scene, camera); });
+    renderer.setAnimationLoop(() => { if (dreht) koerper.forEach(k => { k.rotation.z += 0.01; }); renderer.render(scene, camera); });
   } catch (e) { schritt("failed: " + (e.name || "") + " " + (e.message || e)); }
+});
+// Ohne Kamera und ohne Marke: das Modell frei im Raum, mit dem Finger drehbar.
+document.getElementById("ohne").addEventListener("click", async () => {
+  try {
+    const { OrbitControls } = await import("three/addons/controls/OrbitControls.js");
+    const buehne = document.getElementById("buehne"), renderer = new THREE.WebGLRenderer({ antialias: true });
+    renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2)); buehne.appendChild(renderer.domElement);
+    const scene = new THREE.Scene(); scene.background = new THREE.Color(0xfbfaf7);
+    scene.add(new THREE.HemisphereLight(0xffffff, 0x8a8985, 1.6)); const licht = new THREE.DirectionalLight(0xffffff, 1.4); licht.position.set(-0.6, 0.8, 1); scene.add(licht);
+    const m = modell(); m.aussen.position.z -= 0.46; scene.add(m.aussen);                    // um die Mitte des Koerpers drehen
+    const camera = new THREE.PerspectiveCamera(40, 1, 0.05, 20); camera.position.set(0, 0, 2.6);
+    const steuer = new OrbitControls(camera, renderer.domElement); steuer.enableDamping = true; steuer.autoRotate = true; steuer.autoRotateSpeed = 1.2;
+    const mass = () => { renderer.setSize(buehne.clientWidth, buehne.clientHeight); camera.aspect = buehne.clientWidth / buehne.clientHeight; camera.position.setLength(camera.aspect < 1 ? 2.3 : 1.6); camera.updateProjectionMatrix(); };
+    mass(); window.addEventListener("resize", mass);
+    document.getElementById("start").hidden = true; zeile.hidden = false; zeile.textContent = "drag to turn";
+    renderer.setAnimationLoop(() => { steuer.update(); renderer.render(scene, camera); });
+  } catch (e) { schritt("failed: " + (e.message || e)); }
 });
 window.zfModell = modell;                                            // zum Pruefen ohne Kamera
