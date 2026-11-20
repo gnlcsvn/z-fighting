@@ -1,0 +1,37 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>z-fighting, ar test</title>
+<style>
+  [hidden] { display: none !important; }
+  html, body { margin: 0; height: 100%; background: #fbfaf7; color: #1b1b1d; font: 14px/1.5 "Courier New", Courier, monospace; overflow: hidden; }
+  #buehne { position: fixed; inset: 0; }
+  #start { position: fixed; inset: 0; display: flex; flex-direction: column; justify-content: center; align-items: flex-start; gap: 1.2rem; padding: 0 max(24px, env(safe-area-inset-left)); background: #fbfaf7; z-index: 5; }
+  #start p { margin: 0; max-width: 24rem; color: #8a8985; }
+  #meldung { white-space: pre-line; font-size: 12px; }
+  button { font: inherit; color: #2d3c96; background: none; border: 0; padding: 0; cursor: pointer; text-decoration: underline; text-underline-offset: 0.3em; }
+  #zeile { position: fixed; left: max(16px, env(safe-area-inset-left)); bottom: max(16px, env(safe-area-inset-bottom)); z-index: 4; color: #fff; mix-blend-mode: difference; }
+</style>
+<script type="importmap">
+{ "imports": {
+  "three": "https://cdn.jsdelivr.net/npm/three@0.160.0/build/three.module.js",
+  "three/addons/": "https://cdn.jsdelivr.net/npm/three@0.160.0/examples/jsm/",
+  "mindar-image-three": "https://cdn.jsdelivr.net/npm/mind-ar@1.2.5/dist/mindar-image-three.prod.js"
+} }
+</script>
+</head>
+<body>
+<div id="buehne"></div>
+<div id="start">
+  <span>z-fighting, 02 klein bottle</span>
+  <p>Point the camera at the print. The surface and its copy are drawn in the same place, your phone decides which one is in front.</p>
+  <button id="los" type="button">start camera</button>
+  <button id="ohne" type="button">show the model without the print</button>
+  <p id="meldung"></p>
+</div>
+<div id="zeile" hidden>looking for the print</div>
+<script type="module" src="ar.js?v=4"></script>
+</body>
+</html>
