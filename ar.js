@@ -43,8 +43,11 @@ function modell() {
 }
 
 const meldung = document.getElementById("meldung"), zeile = document.getElementById("zeile");
+window.addEventListener("error", e => { meldung.textContent = "error: " + e.message; });
+window.addEventListener("unhandledrejection", e => { meldung.textContent = "error: " + (e.reason && e.reason.message || e.reason); });
 document.getElementById("los").addEventListener("click", async () => {
   try {
+    meldung.textContent = "starting camera ...";
     const ar = new MindARThree({ container: document.getElementById("buehne"), imageTargetSrc: "ziel.mind", uiScanning: "no", uiLoading: "no", filterMinCF: 0.0005, filterBeta: 0.01 });
     const { renderer, scene, camera } = ar;
     scene.add(new THREE.HemisphereLight(0xffffff, 0x8a8985, 1.6)); const licht = new THREE.DirectionalLight(0xffffff, 1.4); licht.position.set(-0.6, 0.8, 1); scene.add(licht);
@@ -53,6 +56,7 @@ document.getElementById("los").addEventListener("click", async () => {
     anker.onTargetLost = () => { zeile.textContent = "looking for the print"; };
     let dreht = false; document.getElementById("buehne").addEventListener("click", () => { dreht = !dreht; });
     await ar.start();
+    meldung.textContent = "";
     document.getElementById("start").hidden = true; zeile.hidden = false;
     renderer.setAnimationLoop(() => { if (dreht) koerper.rotation.z += 0.01; renderer.render(scene, camera); });
   } catch (e) { meldung.textContent = "camera not available: " + e.message; }
