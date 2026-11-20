@@ -43,11 +43,19 @@ function modell() {
 }
 
 const meldung = document.getElementById("meldung"), zeile = document.getElementById("zeile");
-window.addEventListener("error", e => { meldung.textContent = "error: " + e.message; });
-window.addEventListener("unhandledrejection", e => { meldung.textContent = "error: " + (e.reason && e.reason.message || e.reason); });
+// Jeder Schritt wird sichtbar mitgeschrieben, damit man am Telefon sieht, wo es haengt.
+const schritt = t => { meldung.textContent += (meldung.textContent ? "\n" : "") + t; };
+window.addEventListener("error", e => schritt("error: " + e.message));
+window.addEventListener("unhandledrejection", e => schritt("error: " + (e.reason && e.reason.message || e.reason)));
+schritt("v3 ready, secure " + window.isSecureContext + ", camera api " + !!(navigator.mediaDevices && navigator.mediaDevices.getUserMedia));
 document.getElementById("los").addEventListener("click", async () => {
   try {
-    meldung.textContent = "starting camera ...";
+    schritt("1 asking for camera");
+    const probe = await navigator.mediaDevices.getUserMedia({ audio: false, video: { facingMode: "environment" } });
+    const spur = probe.getVideoTracks()[0], e = spur.getSettings();
+    schritt("2 camera ok: " + (spur.label || "?") + " " + e.width + "x" + e.height);
+    probe.getTracks().forEach(t => t.stop());
+    schritt("3 loading target");
     const ar = new MindARThree({ container: document.getElementById("buehne"), imageTargetSrc: (new URLSearchParams(location.search).get("ziel") || "ziel") + ".mind", uiScanning: "no", uiLoading: "no", filterMinCF: 0.0005, filterBeta: 0.01 });
     const { renderer, scene, camera } = ar;
     scene.add(new THREE.HemisphereLight(0xffffff, 0x8a8985, 1.6)); const licht = new THREE.DirectionalLight(0xffffff, 1.4); licht.position.set(-0.6, 0.8, 1); scene.add(licht);
@@ -55,10 +63,12 @@ document.getElementById("los").addEventListener("click", async () => {
     anker.onTargetFound = () => { zeile.textContent = "tap to turn"; };
     anker.onTargetLost = () => { zeile.textContent = "looking for the print"; };
     let dreht = false; document.getElementById("buehne").addEventListener("click", () => { dreht = !dreht; });
-    await ar.start();
-    meldung.textContent = "";
+    schritt("4 starting tracker");
+    const warte = setTimeout(() => schritt("still starting after 20 s"), 20000);
+    await ar.start(); clearTimeout(warte);
+    schritt("5 running");
     document.getElementById("start").hidden = true; zeile.hidden = false;
     renderer.setAnimationLoop(() => { if (dreht) koerper.rotation.z += 0.01; renderer.render(scene, camera); });
-  } catch (e) { meldung.textContent = "camera not available: " + e.message; }
+  } catch (e) { schritt("failed: " + (e.name || "") + " " + (e.message || e)); }
 });
 window.zfModell = modell;                                            // zum Pruefen ohne Kamera
