@@ -145,3 +145,9 @@ html.frei body { height: auto; min-height: 100dvh; }
 .seite { max-width: 46ch; padding: 2.5rem 0 4rem; }
 .seite p { margin: 0 0 1.1rem; }
 .seite .blau { color: var(--blau); } .seite .rot { color: var(--rot); }
+
+/* Hinweis in der Mitte der Kopfzeile, solange die Seite im Aufbau ist. */
+header { gap: 0.6rem; }
+header .titel, header nav { flex: 1 1 0; }
+header nav { justify-content: flex-end; }
+header .wip { color: var(--leise); white-space: nowrap; font-size: 0.85em; align-self: center; }

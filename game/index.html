@@ -45,12 +45,17 @@ header nav { display: flex; gap: 1.3rem; }
 header nav a { color: var(--leise); }
 header nav a[aria-current="page"], header .titel { color: var(--tinte); }
 header a { text-decoration: none; } header a:hover { text-decoration: underline; }
+header { gap: 0.6rem; }
+header .titel, header nav { flex: 1 1 0; }
+header nav { justify-content: flex-end; }
+header .wip { color: var(--leise); white-space: nowrap; font-size: 0.85em; align-self: center; }
 [hidden] { display: none !important; }
 </style>
 </head>
 <body>
 <header>
   <a href="../" class="titel">z-fighting</a>
+  <span class="wip">work in progress</span>
   <nav aria-label="pages"><a href="./" aria-current="page">fight!</a><a href="../about.html">about</a></nav>
 </header>
 <main>
