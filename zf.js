@@ -397,12 +397,12 @@
       for (var i = 0; i < knoepfe.length; i++) knoepfe[i].setAttribute("aria-pressed", knoepfe[i].getAttribute("data-modus") === m ? "true" : "false");
       groesse(); bild();
     }
-    for (var b = 0; b < knoepfe.length; b++) knoepfe[b].addEventListener("click", function () { modus(this.getAttribute("data-modus")); });
+    for (var b = 0; b < knoepfe.length; b++) knoepfe[b].addEventListener("click", function () { var m = this.getAttribute("data-modus"); werke.forEach(function (w) { w.modus(m); }); });   // die Ansicht gilt fuer alle Werke
     feld(fig, werke.length);
     if (window.IntersectionObserver) new IntersectionObserver(function (es) { st.sichtbar = es[0].isIntersecting; }, { rootMargin: "100px" }).observe(cv);
 
     if (window.ResizeObserver) new ResizeObserver(groesse).observe(cv);          // die Buehne passt sich dem Fenster an
-    werke.push({ bild: bild, groesse: groesse, heim: function () { st.az = AZ0; st.el = EL0; st.auto = st.modus !== "rahmen"; }, schritt: function () { if (st.auto && st.sichtbar) { st.az += 0.006; bild(); } } });
+    werke.push({ bild: bild, groesse: groesse, modus: modus, heim: function () { st.az = AZ0; st.el = EL0; st.auto = st.modus !== "rahmen"; }, schritt: function () { if (st.auto && st.sichtbar) { st.az += 0.006; bild(); } } });
     groesse();
   }
 
