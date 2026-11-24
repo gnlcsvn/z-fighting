@@ -44,9 +44,9 @@
     window.ZFFORMEN[id] = { az: s[0], el: s[1], kandidat: k };
     var titel = k.name, da = (A.geplottet || []).indexOf(id) >= 0;
     var serie = zwei(++nr) + "/" + zwei(gesamt);
-    var num = el("span", serie, "nr"), marke = el("i", null, da ? "marke da" : "marke");   // Nummer in der Serie, Quadrat gefuellt = geplottet
+    var num = el("span", serie, "nr");                                   // Nummer in der Serie
     window.ZFFORMEN[id].serie = serie;
-    num.appendChild(marke); num.title = da ? "plotted" : "not plotted yet"; num.setAttribute("aria-label", "number " + nr + " of " + gesamt + ", " + num.title);
+    num.setAttribute("aria-label", "number " + nr + " of " + gesamt);
     var art = el("article"), fig = el("figure", null, "werk"), cv = el("canvas"), cap = el("figcaption"), sch = el("span", null, "schalter");
     fig.setAttribute("data-form", id); cv.width = 600; cv.height = 600;
     cv.setAttribute("aria-label", k.name + " fighting its own copy. Drag to rotate.");
@@ -59,7 +59,7 @@
     if (t) { q.appendChild(el("p", t[0])); q.appendChild(el("p", t[1], "leise")); }
     var stand = el("p", null, "leise stand");                            // sagt, was das Quadrat heisst
     stand.appendChild(el("i", null, da ? "marke da" : "marke"));
-    stand.appendChild(document.createTextNode(da ? "plotted. each surface is plotted once." : "not plotted yet. each is plotted once."));
+    stand.appendChild(document.createTextNode(da ? "plotted" : "not plotted yet"));
     q.appendChild(stand);
     art.appendChild(q); main.appendChild(art);
   });

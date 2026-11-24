@@ -199,7 +199,6 @@ header .titel, header nav a { white-space: nowrap; }
 .wahl .nr { flex: none; margin-left: 0.8rem; color: var(--leise); overflow: visible; }
 .marke { display: inline-block; flex: none; width: var(--ziffer, 9px); height: var(--ziffer, 9px); box-sizing: border-box; border: 1px solid var(--knopf); vertical-align: baseline; }
 .marke.da { background: var(--knopf); }
-.nr .marke { margin-left: 0.55em; }
 .stand .marke { margin-right: 0.6em; border-color: var(--leise); }
 .stand .marke.da { background: var(--leise); }
 .quelle p.stand { margin-bottom: 0; }
