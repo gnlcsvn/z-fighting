@@ -11,12 +11,12 @@
     }
   }
   function param(t, wechsel, T) {
-    var nu = t.nu * FEIN, nv = t.nv * FEIN, P = [];
+    var nu = Math.max(3, Math.round(t.nu * FEIN)), nv = Math.max(3, Math.round(t.nv * FEIN)), P = [];
     for (var i = 0; i <= nu; i++) for (var j = 0; j <= nv; j++) P.push(t.f(t.u[0] + (t.u[1] - t.u[0]) * i / nu, t.v[0] + (t.v[1] - t.v[0]) * j / nv));
     ausGitter(P, nu, nv, wechsel, T);
   }
   function rohr(t, wechsel, T) {                                       // Rahmen ohne Verdrehung, Naht bei geschlossener Kurve ausgeglichen
-    var n = (t.n || 160) * FEIN, m = (t.m || 8) * FEIN, zu = t.offen ? 0 : 1, C = [], G = [], N = [], i, j;
+    var n = Math.max(8, Math.round((t.n || 160) * FEIN)), m = Math.max(3, Math.round((t.m || 8) * FEIN)), zu = t.offen ? 0 : 1, C = [], G = [], N = [], i, j;
     for (i = 0; i <= n; i++) C.push(t.kurve(i / n));
     function minus(a, b) { return [a[0] - b[0], a[1] - b[1], a[2] - b[2]]; }
     function norm(a) { var l = Math.hypot(a[0], a[1], a[2]) || 1; return [a[0] / l, a[1] / l, a[2] / l]; }
@@ -44,7 +44,7 @@
   var TETRA = [[0, 5, 1, 6], [0, 1, 2, 6], [0, 2, 3, 6], [0, 3, 7, 6], [0, 7, 4, 6], [0, 4, 5, 6]];
   var ECKE = [[0, 0, 0], [1, 0, 0], [1, 1, 0], [0, 1, 0], [0, 0, 1], [1, 0, 1], [1, 1, 1], [0, 1, 1]];
   function implizit(t, wechsel, T) {
-    var bb = typeof t.box === "number" ? [t.box, t.box, t.box] : t.box, bm = Math.max(bb[0], bb[1], bb[2]), h = 2 * bm / ((t.res || 40) * Math.min(FEIN, 2));
+    var bb = typeof t.box === "number" ? [t.box, t.box, t.box] : t.box, bm = Math.max(bb[0], bb[1], bb[2]), h = 2 * bm / Math.max(8, Math.round((t.res || 40) * Math.min(FEIN, 2)));
     var nx = Math.max(2, Math.round(2 * bb[0] / h)), ny = Math.max(2, Math.round(2 * bb[1] / h)), nz = Math.max(2, Math.round(2 * bb[2] / h));
     var hx = 2 * bb[0] / nx, hy = 2 * bb[1] / ny, hz = 2 * bb[2] / nz, my = ny + 1, mz = nz + 1, W = new Float64Array((nx + 1) * my * mz), i, j, k, e;
     var kugel = t.kugel || (typeof t.box === "number" ? t.box : Infinity), k2 = kugel * kugel;

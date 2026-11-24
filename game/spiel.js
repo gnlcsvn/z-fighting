@@ -11,39 +11,21 @@
   var DAUER = [9, 32];                                                 // das Spiel haelt irgendwann in dieser Spanne an (Sekunden)
   var TEMPO = 1.25, DENKEN = 0.22, PROBEN = 6;                         // Maschine: hoechste Drehgeschwindigkeit (rad/s), Abstand der Entscheidungen, Versuche
 
-  function mal(p, q) { return [p[0] * q[0] - p[1] * q[1], p[0] * q[1] + p[1] * q[0]]; }
-  function durch(p, q) { var n = q[0] * q[0] + q[1] * q[1]; return [(p[0] * q[0] + p[1] * q[1]) / n, (p[1] * q[0] - p[0] * q[1]) / n]; }
-  var FORMEN = [
-    { name: "klein bottle", nu: 72, nv: 18, f: function (a, b) {
-      var u = 2 * PI * a, v = 2 * PI * b, r = 3 + Math.cos(u / 2) * Math.sin(v) - Math.sin(u / 2) * Math.sin(2 * v);
-      return [r * Math.cos(u), r * Math.sin(u), Math.sin(u / 2) * Math.sin(v) + Math.cos(u / 2) * Math.sin(2 * v)];
-    } },
-    { name: "boy’s surface", nu: 24, nv: 72, f: function (a, b) {
-      var w = [a * Math.cos(2 * PI * b), a * Math.sin(2 * PI * b)], w2 = mal(w, w), w3 = mal(w2, w), w4 = mal(w2, w2), w6 = mal(w3, w3);
-      var d = [w6[0] + Math.sqrt(5) * w3[0] - 1, w6[1] + Math.sqrt(5) * w3[1]];
-      var g1 = -1.5 * durch(mal(w, [1 - w4[0], -w4[1]]), d)[1], g2 = -1.5 * durch(mal(w, [1 + w4[0], w4[1]]), d)[0], g3 = durch([1 + w6[0], w6[1]], d)[1] - 0.5, g = g1 * g1 + g2 * g2 + g3 * g3;
-      return [g1 / g, g2 / g, g3 / g];
-    } },
-    { name: "möbius strip", nu: 72, nv: 8, f: function (a, b) {
-      var t = 2 * PI * a, s = b - 0.5, r = 1 + s * Math.cos(t / 2);
-      return [r * Math.cos(t), r * Math.sin(t), s * Math.sin(t / 2)];
-    } }
-  ];
-  function netz(form, wechsel) {
-    var nu = form.nu, nv = form.nv, P = [], T = [], i, j, k;
-    for (i = 0; i <= nu; i++) for (j = 0; j <= nv; j++) P.push(form.f(i / nu, j / nv));
-    var lo = [1e9, 1e9, 1e9], hi = [-1e9, -1e9, -1e9];
-    for (i = 0; i < P.length; i++) for (k = 0; k < 3; k++) { lo[k] = Math.min(lo[k], P[i][k]); hi[k] = Math.max(hi[k], P[i][k]); }
-    var c = [(lo[0] + hi[0]) / 2, (lo[1] + hi[1]) / 2, (lo[2] + hi[2]) / 2], rm = 0;
-    for (i = 0; i < P.length; i++) rm = Math.max(rm, Math.hypot(P[i][0] - c[0], P[i][1] - c[1], P[i][2] - c[2]));
-    function p(i, j) { return P[i * (nv + 1) + j]; }
-    for (i = 0; i < nu; i++) for (j = 0; j < nv; j++) {
-      var a = p(i, j), b = p(i + 1, j), cc = p(i + 1, j + 1), d = p(i, j + 1);
-      if (wechsel && (i + j) % 2) T.push(b, cc, d, b, d, a); else T.push(a, b, cc, a, cc, d);
-    }
-    var out = new Float64Array(T.length * 3), s = GROESSE / rm;
-    for (i = 0; i < T.length; i++) for (k = 0; k < 3; k++) out[3 * i + k] = (T[i][k] - c[k]) * s;
-    return out;
+  // Die Flaechen sind die Auswahl der Website (flaechen.js, auswahl.js), die Netze baut netze.js. Fuers Spiel werden sie
+  // in zwei Feinheiten gerechnet: hoechstens rund DREIECKE Dreiecke fuers Bild, rund GROB fuer das Vorausdenken der
+  // Maschine, die jede Entscheidung mehrfach durchrechnet und nur die Flaechenanteile braucht.
+  var DREIECKE = 24000, GROB = 3000, FORMEN = [], netze = {};          // Bild; Vorausdenken der Maschine
+  (function () {
+    var nach = {}; (window.KANDIDATEN || []).forEach(function (k) { nach[k.id] = k; });
+    ((window.AUSWAHL || {}).ids || []).forEach(function (id) { if (nach[id]) FORMEN.push(nach[id]); });
+  })();
+  function netzFuer(k) {                                               // -> { A0, B0 }, einmal gerechnet
+    if (netze[k]) return netze[k];
+    var f = FORMEN[k], fein = 1, A = window.ZFNETZ(f, false, 1), n = A.length / 9, g = Math.sqrt(GROB / n);
+    if (n > DREIECKE) { fein = Math.sqrt(DREIECKE / n); A = window.ZFNETZ(f, false, fein); }
+    var nz = { A0: A, B0: window.ZFNETZ(f, true, fein) };
+    if (g < fein) { nz.Ag = window.ZFNETZ(f, false, g); nz.Bg = window.ZFNETZ(f, true, g); } else { nz.Ag = nz.A0; nz.Bg = nz.B0; }
+    return (netze[k] = nz);
   }
 
   // ---------------------------------------------------------------- Drehungen (3 x 3, zeilenweise)
@@ -112,10 +94,11 @@
   }
 
   // ---------------------------------------------------------------- die beiden Koerper
-  var form, A0, B0, WA, WB, PA, PB, NA, NB;                            // A blau (Maschine), B rot (du)
+  var form, formNr = 0, A0, B0, WA, WB, PA, PB, NA, NB, Ag, Bg, WAg, WBg, PAg, PBg;                // A blau (Maschine), B rot (du)
   var Rm = zufall(), Rd = zufall();
   function lade(k) {
-    form = FORMEN[k % FORMEN.length]; A0 = netz(form, false); B0 = netz(form, true);
+    formNr = k % FORMEN.length; form = FORMEN[formNr]; var nz = netzFuer(formNr); A0 = nz.A0; B0 = nz.B0; Ag = nz.Ag; Bg = nz.Bg;
+    WAg = new Float64Array(Ag.length); WBg = new Float64Array(Bg.length); PAg = new Float64Array(Ag.length); PBg = new Float64Array(Bg.length);
     WA = new Float64Array(A0.length); WB = new Float64Array(B0.length); PA = new Float64Array(A0.length); PB = new Float64Array(B0.length);
     NA = new Float32Array(A0.length / 3); NB = new Float32Array(B0.length / 3);
   }
@@ -126,10 +109,12 @@
       N[t / 3] = x / l; N[t / 3 + 1] = y / l; N[t / 3 + 2] = z / l;
     }
   }
-  function rechne(RA, RB, n) {                                         // -> [Bildpunkte blau, Bildpunkte rot]
+  function rechne(RA, RB, n, grob) {                                   // -> [Bildpunkte blau, Bildpunkte rot]
     var f = felder(n); f.wmax.fill(0); f.best.fill(Infinity); f.team.fill(0);
-    wende(RA, A0, WA); wende(RB, B0, WB); projiziere(WA, n, PA); projiziere(WB, n, PB);
-    raster(PA, n, 1, 1, f); raster(PB, n, 2, 1, f); raster(PA, n, 1, 2, f); raster(PB, n, 2, 2, f);
+    var a = grob ? PAg : PA, b = grob ? PBg : PB;
+    if (grob) { wende(RA, Ag, WAg); wende(RB, Bg, WBg); projiziere(WAg, n, a); projiziere(WBg, n, b); }
+    else { wende(RA, A0, WA); wende(RB, B0, WB); projiziere(WA, n, a); projiziere(WB, n, b); }
+    raster(a, n, 1, 1, f); raster(b, n, 2, 1, f); raster(a, n, 1, 2, f); raster(b, n, 2, 2, f);
     var b = 0, r = 0, t = f.team;
     for (var k = 0; k < t.length; k++) { if (t[k] === 1) b++; else if (t[k] === 2) r++; }
     return [b, r];
@@ -179,14 +164,14 @@
       var w = k === 0 ? wm : [wm[0] + (Math.random() - 0.5) * 2.2, wm[1] + (Math.random() - 0.5) * 2.2, wm[2] + (Math.random() - 0.5) * 2.2];
       var l = Math.hypot(w[0], w[1], w[2]); if (l > TEMPO) w = [w[0] * TEMPO / l, w[1] * TEMPO / l, w[2] * TEMPO / l];
       var l2 = Math.hypot(w[0], w[1], w[2]), R = l2 > 1e-6 ? mm(achse(w[0], w[1], w[2], l2 * DENKEN * 1.6), Rm) : Rm;
-      var z = rechne(R, Rd, N_DENK), anteil = z[0] / (z[0] + z[1] + 1e-9);
+      var z = rechne(R, Rd, N_DENK, true), anteil = z[0] / (z[0] + z[1] + 1e-9);
       if (anteil > wert) { wert = anteil; beste = w; }
     }
     wm = beste;
   }
 
   // ---------------------------------------------------------------- Ablauf
-  var zustand = "start", ende = 0, uhr = 0, runde = 0, letzte = 0, stand = [0, 0];
+  var zustand = "start", ende = 0, uhr = 0, letzte = 0, stand = [0, 0];
   var SCHL = "zf-spiel-1", serie = 0, rekord = 0;
   try { var g = JSON.parse(localStorage.getItem(SCHL) || "{}"); serie = g.serie || 0; rekord = g.rekord || 0; } catch (e) {}
   function merke() { try { localStorage.setItem(SCHL, JSON.stringify({ serie: serie, rekord: rekord })); } catch (e) {} }
@@ -199,7 +184,8 @@
   function zeigeText() {
     $("serie").textContent = serie > 0 ? "streak " + serie + (rekord > serie ? " · best " + rekord : "") : (rekord ? "best " + rekord : "");
     $("form").textContent = form.name;
-    if (zustand === "start") { $("zeile").textContent = "Turn your body. Hold more of the picture than the machine. Nobody knows when it stops."; $("knopf").textContent = "start"; $("knopf").hidden = false; }
+    $("wechsel").hidden = zustand !== "aus"; $("wahl").hidden = zustand !== "wahl";
+    if (zustand === "start" || zustand === "wahl") { $("zeile").textContent = "Turn your body. Hold more of the picture than the machine. Nobody knows when it stops."; $("knopf").textContent = "start"; $("knopf").hidden = zustand === "wahl"; }
     else if (zustand === "lauf") { $("zeile").textContent = "Drag to turn."; $("knopf").hidden = true; }
     else {
       var s = stand[0] + stand[1] || 1, du = Math.round(stand[1] / s * 100);
@@ -209,7 +195,6 @@
     document.body.setAttribute("data-zustand", zustand);
   }
   function starte() {
-    if (zustand === "aus") { runde++; lade(runde); }
     Rm = zufall(); Rd = zufall(); wm = [0.6, 0.3, 0.2]; uhr = 0; denkZeit = 0;
     ende = DAUER[0] + Math.random() * (DAUER[1] - DAUER[0]);
     zustand = "lauf"; zeigeText();
@@ -219,7 +204,48 @@
     if (stand[1] > stand[0]) { serie++; if (serie > rekord) rekord = serie; } else serie = 0;
     merke(); zeigeText();
   }
-  $("knopf").addEventListener("click", starte);
+  $("knopf").addEventListener("click", function () { if (zustand === "start") oeffneWahl(); else starte(); });
+  $("wechsel").addEventListener("click", oeffneWahl);
+
+  // ---------------------------------------------------------------- choose your fighter: alle Flaechen als kleine Bilder
+  var gewaehlt = 0, kacheln = [], gemalt = 0, malt = false, D = 44;
+  function daumen(k, c) {                                              // die Flaeche allein, rot, in der festen Ansicht des Spiels
+    var V = netzFuer(k).B0, P = projiziere(V, D, new Float64Array(V.length)), Nn = new Float32Array(V.length / 3), f = felder(D);
+    f.wmax.fill(0); f.best.fill(Infinity); f.team.fill(0); raster(P, D, 2, 1, f); raster(P, D, 2, 2, f); normalen(V, Nn);
+    var x = c.getContext("2d"), bild = x.createImageData(D, D), d = bild.data, fa = FARBE[1];
+    for (var i = 0, o = 0; i < D * D; i++, o += 4) {
+      if (!f.team[i]) { d[o + 3] = 0; continue; }
+      var q = f.drei[i] * 3, h = Math.round(Math.abs(Nn[q] * LICHT[0] + Nn[q + 1] * LICHT[1] + Nn[q + 2] * LICHT[2]) * 5) / 5, m = 0.28 + 0.72 * h;
+      d[o] = fa[0] * m + PAPIER[0] * (1 - m) * 0.55; d[o + 1] = fa[1] * m + PAPIER[1] * (1 - m) * 0.55; d[o + 2] = fa[2] * m + PAPIER[2] * (1 - m) * 0.55; d[o + 3] = 255;
+    }
+    x.putImageData(bild, 0, 0);
+  }
+  function maleDaumen() {                                              // nach und nach, damit die Seite nicht stockt
+    if (gemalt >= FORMEN.length) { malt = false; return; }
+    malt = true; daumen(gemalt, kacheln[gemalt].firstChild); gemalt++; setTimeout(maleDaumen, 0);
+  }
+  function waehle(k, fokus) {
+    gewaehlt = (k + FORMEN.length) % FORMEN.length;
+    kacheln.forEach(function (b, i) { b.setAttribute("aria-pressed", i === gewaehlt ? "true" : "false"); });
+    $("kaempfer").textContent = FORMEN[gewaehlt].name;
+    if (fokus) kacheln[gewaehlt].focus();
+  }
+  function oeffneWahl() {
+    if (!kacheln.length) FORMEN.forEach(function (f, k) {
+      var b = document.createElement("button"), c = document.createElement("canvas");
+      b.type = "button"; b.className = "kachel"; b.setAttribute("aria-label", f.name); c.width = D; c.height = D; b.appendChild(c);
+      b.addEventListener("click", function () { if (gewaehlt === k && b.getAttribute("aria-pressed") === "true" && b.dataset.bereit) kaempfe(); else { waehle(k); b.dataset.bereit = "1"; } });
+      $("gitter").appendChild(b); kacheln.push(b);
+    });
+    kacheln.forEach(function (b) { delete b.dataset.bereit; });
+    zustand = "wahl"; zeigeText(); waehle(formNr, true); if (!malt) maleDaumen();
+  }
+  function kaempfe() { lade(gewaehlt); starte(); }
+  $("kampf").addEventListener("click", kaempfe);
+  $("gitter").addEventListener("keydown", function (e) {
+    var d = { ArrowLeft: -1, ArrowRight: 1, ArrowUp: -5, ArrowDown: 5 }[e.key];
+    if (d) { e.preventDefault(); e.stopPropagation(); waehle(gewaehlt + d, true); }
+  });
 
   // Steuerung: Ziehen dreht den roten Koerper um die Achsen des Bilds
   var zieh = null;
@@ -233,13 +259,14 @@
   function los() { zieh = null; }
   cv.addEventListener("pointerup", los); cv.addEventListener("pointercancel", los);
   var tasten = {};
-  window.addEventListener("keydown", function (e) { if (e.key.indexOf("Arrow") === 0) { tasten[e.key] = true; e.preventDefault(); } else if ((e.key === " " || e.key === "Enter") && zustand !== "lauf" && document.activeElement !== $("knopf")) starte(); });
+  window.addEventListener("keydown", function (e) { if (e.key.indexOf("Arrow") === 0) { tasten[e.key] = true; e.preventDefault(); } else if ((e.key === " " || e.key === "Enter") && zustand !== "lauf" && (!document.activeElement || document.activeElement.tagName !== "BUTTON")) { if (zustand === "start") oeffneWahl(); else if (zustand === "wahl") kaempfe(); else starte(); } });
   window.addEventListener("keyup", function (e) { delete tasten[e.key]; });
 
   function bild(jetzt) {
     requestAnimationFrame(bild);
     var dt = Math.min(0.05, (jetzt - letzte) / 1000 || 0); letzte = jetzt;
     groesse();
+    if (zustand === "wahl") return;
     if (zustand === "aus") { if (neuMalen) { rechne(Rm, Rd, N); male(true); neuMalen = false; } return; }
     if (document.hidden) return;
     if (zustand === "lauf") {
@@ -256,5 +283,5 @@
     stand = rechne(Rm, Rd, N); male(false); balken(stand[0], stand[1]); neuMalen = false;
   }
   lade(0); zeigeText(); requestAnimationFrame(bild);
-  window.ZFS = { zeit: function () { var t = performance.now(), i; for (i = 0; i < 20; i++) rechne(Rm, Rd, N); var a = (performance.now() - t) / 20; t = performance.now(); for (i = 0; i < 20; i++) rechne(Rm, Rd, N_DENK); return [a, (performance.now() - t) / 20]; }, halt: function () { if (zustand === "lauf") halt(); }, zustand: function () { return zustand; }, stand: function () { return stand; } };
+  window.ZFS = { zeit: function () { var t = performance.now(), i; for (i = 0; i < 20; i++) rechne(Rm, Rd, N); var a = (performance.now() - t) / 20; t = performance.now(); for (i = 0; i < 20; i++) rechne(Rm, Rd, N_DENK, true); return [a, (performance.now() - t) / 20]; }, halt: function () { if (zustand === "lauf") halt(); }, zustand: function () { return zustand; }, stand: function () { return stand; } };
 })();

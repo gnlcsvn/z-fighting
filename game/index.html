@@ -49,6 +49,19 @@ header { gap: 0.6rem; }
 header .titel, header nav { flex: 1 1 0; }
 header nav { justify-content: flex-end; }
 header .wip { color: var(--leise); white-space: nowrap; font-size: 0.85em; align-self: center; }
+
+/* choose your fighter: liegt ueber dem Spielfeld, ein Raster aus allen Flaechen, unten der Name und der Knopf */
+main { position: relative; }
+#wahl { position: absolute; inset: 0; z-index: 2; background: var(--papier); display: flex; flex-direction: column; align-items: center; container-type: size; }
+#wahl h1 { flex: none; margin: 0.4rem 0 0.9rem; font: inherit; align-self: flex-start; }
+#gitter { flex: none; display: grid; grid-template-columns: repeat(5, 1fr); gap: 4px; width: min(100%, 27rem, calc(100cqh - 9.5rem)); }
+.kachel { height: auto; padding: 3px; background: none; border: 1px solid transparent; border-radius: 2px; aspect-ratio: 1; }
+.kachel canvas { display: block; width: 100%; height: 100%; cursor: pointer; }
+.kachel[aria-pressed="true"] { border-color: var(--rot); background: color-mix(in srgb, var(--rot) 9%, transparent); }
+.los { flex: none; width: 100%; display: flex; justify-content: space-between; align-items: center; gap: 1rem; margin-top: auto; padding: 0.9rem 0 1rem; }
+.los span { min-width: 0; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.unten .knoepfe { display: flex; gap: 0.6rem; }
+#wechsel { color: var(--knopf); background: none; }
 [hidden] { display: none !important; }
 </style>
 </head>
@@ -65,9 +78,17 @@ header .wip { color: var(--leise); white-space: nowrap; font-size: 0.85em; align
   <div class="zahlen"><span class="du">you <span id="duZahl">50</span></span><span class="sie"><span id="sieZahl">50</span> machine</span></div>
   <div class="unten">
     <p id="zeile" role="status"></p>
-    <button type="button" id="knopf">start</button>
+    <div class="knoepfe"><button type="button" id="knopf">start</button><button type="button" id="wechsel" hidden>change fighter</button></div>
+  </div>
+  <div id="wahl" hidden>
+    <h1>choose your fighter</h1>
+    <div id="gitter"></div>
+    <div class="los"><span id="kaempfer"></span><button type="button" id="kampf">fight!</button></div>
   </div>
 </main>
+<script src="flaechen.js"></script>
+<script src="netze.js"></script>
+<script src="auswahl.js"></script>
 <script src="spiel.js"></script>
 </body>
 </html>
