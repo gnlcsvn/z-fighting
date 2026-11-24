@@ -52,11 +52,12 @@ header .wip { color: var(--leise); white-space: nowrap; font-size: 0.85em; align
 
 /* choose your fighter: liegt ueber dem Spielfeld, ein Raster aus allen Flaechen, unten der Name und der Knopf */
 main { position: relative; }
-#wahl { position: absolute; inset: 0; z-index: 2; background: var(--papier); display: flex; flex-direction: column; align-items: center; container-type: size; }
-#wahl h1 { flex: none; margin: 0.4rem 0 0.9rem; font: inherit; align-self: flex-start; }
-#gitter { flex: none; display: grid; grid-template-columns: repeat(5, 1fr); gap: 4px; width: min(100%, 27rem, calc(100cqh - 9.5rem)); }
-.kachel { height: auto; padding: 3px; background: none; border: 1px solid transparent; border-radius: 2px; aspect-ratio: 1; }
-.kachel canvas { display: block; width: 100%; height: 100%; cursor: pointer; }
+#wahl { position: absolute; inset: 0; z-index: 2; background: var(--papier); display: flex; flex-direction: column; }
+#wahl h1 { flex: none; margin: 0.4rem 0 0.9rem; font: inherit; }
+/* volle Breite, aber nie hoeher als der Schirm hergibt (ohne Container-Einheiten: Safari auf dem iPhone rechnete sie falsch) */
+#gitter { flex: none; display: grid; grid-template-columns: repeat(5, minmax(0, 1fr)); gap: 4px; width: 100%; max-width: min(30rem, calc(100dvh - 17rem)); margin: 0 auto; }
+.kachel { display: block; width: 100%; min-width: 0; height: auto; margin: 0; padding: 3px; background: none; border: 1px solid transparent; border-radius: 2px; -webkit-appearance: none; appearance: none; }
+.kachel canvas { display: block; width: 100%; height: auto; aspect-ratio: 1; cursor: pointer; }
 .kachel[aria-pressed="true"] { border-color: var(--rot); background: color-mix(in srgb, var(--rot) 9%, transparent); }
 .los { flex: none; width: 100%; display: flex; justify-content: space-between; align-items: center; gap: 1rem; margin-top: auto; padding: 0.9rem 0 1rem; }
 .los span { min-width: 0; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
