@@ -1,4 +1,4 @@
-/* Auswahl fuer das Website-Artefakt, uebertragen aus dem Kandidaten-Werkzeug (zfighting_kandidaten).
+/* Auswahl fuer das Website-Artefakt, uebertragen aus dem Kandidaten-Werkzeug (zfighting/kandidaten).
    ids: die Flaechen mit Urteil "in", in der Reihenfolge von flaechen.js. sicht: Standardperspektive in Grad (az, el);
    fehlt sie, gilt az/el aus flaechen.js. Neu uebertragen: Ablage des Kandidaten-Artefakts lesen (auswahl/stand)
    oder "Auswahl als Text" einfuegen, diese Datei neu schreiben, python3 baue_artefakt.py, neu veroeffentlichen. */

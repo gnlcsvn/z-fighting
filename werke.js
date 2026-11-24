@@ -2,7 +2,7 @@
    Braucht window.KANDIDATEN (flaechen.js, ohne Notizen) und window.AUSWAHL (auswahl.js).
    TEXTE: je Werk ein Satz (hoechstens rund 105 Zeichen) und die Quelle so kurz wie moeglich (hoechstens rund 50).
    Stand 2026-11-24: nur klein und boy sind in Buechern geprueft, der Rest stammt aus den Recherchenotizen
-   (zfighting_kandidaten/flaechen.js) und ist von Gian-Luca als Zwischenstand zur Veroeffentlichung freigegeben. */
+   (zfighting/kandidaten/flaechen.js) und ist von Gian-Luca als Zwischenstand zur Veroeffentlichung freigegeben. */
 (function () {
   "use strict";
   var K = window.KANDIDATEN || [], A = window.AUSWAHL || { ids: [], sicht: {} }, nach = {}, main = document.querySelector("main");

@@ -1,7 +1,7 @@
 /* AR-Test: Das geplottete Blatt ist die Marke (ziel.mind, aus der Plotdatei erzeugt). Darueber stehen die Kleinsche
    Flasche und ihre um 0.22 Grad verdrehte Kopie am selben Ort. Welche vorn liegt, entscheidet der Tiefenpuffer des
    Telefons: das Z-Fighting ist hier echt und sieht auf jedem Geraet anders aus.
-   Form, Kopie und Blickrichtung wie in plot3d_farbe/zfighting_bild.py (motiv), damit das Modell von vorn gesehen
+   Form, Kopie und Blickrichtung wie in zfighting/plot3d_farbe/zfighting_bild.py (motiv), damit das Modell von vorn gesehen
    auf der Zeichnung liegt. */
 import * as THREE from "three";
 import { MindARThree } from "mindar-image-three";

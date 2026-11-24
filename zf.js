@@ -1,5 +1,5 @@
 /* z-fighting im Browser.
-   Dieselbe Rechnung wie in plot3d_farbe/zfighting_formen.py, nur als Rasterer statt mit Strahlen:
+   Dieselbe Rechnung wie in zfighting/plot3d_farbe/zfighting_formen.py, nur als Rasterer statt mit Strahlen:
    - Das Bild ist ein grobes Raster aus n x n Bildpunkten.
    - Pro Dreieck: 1/Tiefe ist ueber den Schirm linear. Genau gerechnet wird sie nur am Anker (erste Ecke,
      auf ganze Bildpunkte gerastet), von dort mit gerundeter Steigung fortgeschrieben und abgeschnitten.
@@ -287,7 +287,7 @@
       ctx.imageSmoothingEnabled = false;
       ctx.drawImage(klein, 0, 0, cv.width, cv.height);
     }
-    // Das Blatt gerahmt, wie plot3d_farbe/zfighting_bild.py (hoch) und wie im Kandidaten-Werkzeug. Masse in mm:
+    // Das Blatt gerahmt, wie zfighting/plot3d_farbe/zfighting_bild.py (hoch) und wie im Kandidaten-Werkzeug. Masse in mm:
     // Rahmen 330, Profil 8, Fenster 190, Bildpunkt 1.05; Motiv mittig im Fenster, hoechstens 158 x 150; SAVINO fest links unten.
     function kasten(n) {
       var x0 = n, x1 = -1, y0 = n, y1 = -1;

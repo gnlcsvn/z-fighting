@@ -1,5 +1,5 @@
 /* Netze fuer die Flaechen aus flaechen.js (param, rohr, implizit).
-   Erzeugt von baue_artefakt.py aus zfighting_kandidaten/kandidaten.js, ergaenzt um den Regler mesh (fein). */
+   Erzeugt von baue_artefakt.py aus zfighting/kandidaten/kandidaten.js, ergaenzt um den Regler mesh (fein). */
 (function () {
   "use strict";
   var PI = Math.PI, GROESSE = 22, FEIN = 1;

@@ -142,8 +142,14 @@ header nav a[aria-current="page"], header .titel { color: var(--tinte); }
 /* Textseiten (about) duerfen scrollen */
 html.frei { height: auto; overflow: auto; }
 html.frei body { height: auto; min-height: 100dvh; }
-.seite { max-width: 46ch; padding: 2.5rem 0 4rem; }
-.seite p { margin: 0 0 1.1rem; }
+.seite { padding: 2.5rem 0 4rem; }
+.seite p, .seite h2 { max-width: 46ch; margin: 0 0 1.1rem; }
+.seite h2 { font: inherit; color: var(--leise); margin-top: 2.5rem; }
+/* Bilder und Videos als Unterbrechung in voller Breite der Spalte, am Telefon bis an den Rand */
+.seite figure { margin: 2.2rem 0; }
+.seite figure img, .seite figure video { display: block; width: 100%; height: auto; }
+.seite figcaption { display: block; padding-top: 0.5rem; color: var(--leise); }
+@media (max-width: 640px) { .seite figure { margin-inline: -1.25rem; } .seite figcaption { padding-inline: 1.25rem; } }
 .seite .blau { color: var(--blau); } .seite .rot { color: var(--rot); }
 
 /* Hinweis in der Mitte der Kopfzeile, solange die Seite im Aufbau ist. */
