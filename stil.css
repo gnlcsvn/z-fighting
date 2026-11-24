@@ -160,8 +160,9 @@ figcaption { flex-wrap: wrap; }
 .schalter { width: 100%; margin-left: 0; justify-content: space-between; }
 /* Text zum Werk: so hoch, wie der Schirm hergibt, nie scrollen. Ist er laenger, blendet er unten aus und der Knopf
    "more" schiebt den ganzen Text ueber Bild und Bildzeile. */
-:root { --unten: clamp(12rem, 30dvh, 21rem); }
-@media (min-width: 641px) { :root { --unten: clamp(12rem, 30dvh, 21rem); } }
+:root { --unten: 12.5rem; }                 /* gerade so hoch wie die Regler: ein Satz und die Quelle passen immer */
+@media (min-width: 641px) { :root { --unten: 11rem; } }
+@media (max-width: 640px) { .regler { gap: 0.2rem 1.5rem; } .regler input { height: 1.8rem; } .regler .zeile { min-height: 1.8rem; } }
 .werk { position: relative; }
 .unten { position: relative; }
 .unten.text { overflow: hidden; }
