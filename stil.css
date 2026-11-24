@@ -151,3 +151,30 @@ header { gap: 0.6rem; }
 header .titel, header nav { flex: 1 1 0; }
 header nav { justify-content: flex-end; }
 header .wip { color: var(--leise); white-space: nowrap; font-size: 0.85em; align-self: center; }
+
+/* ---------------------------------------------------------------- Bildzeile fest in zwei Zeilen (seit 2026-11-24)
+   Oben Pfeile und Name, darunter die Knoepfe. So verschiebt ein langer Name nichts; passt er nicht, wird er gekuerzt. */
+figcaption { flex-wrap: wrap; }
+.wahl { flex: 1 1 100%; min-width: 0; }
+.wahl span { flex: 1; min-width: 0; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.schalter { width: 100%; margin-left: 0; justify-content: space-between; }
+/* Text zum Werk: so hoch, wie der Schirm hergibt, nie scrollen. Ist er laenger, blendet er unten aus und der Knopf
+   "more" schiebt den ganzen Text ueber Bild und Bildzeile. */
+:root { --unten: clamp(12rem, 30dvh, 21rem); }
+@media (min-width: 641px) { :root { --unten: clamp(12rem, 30dvh, 21rem); } }
+.werk { position: relative; }
+.unten { position: relative; }
+.unten.text { overflow: hidden; }
+.unten.text > .quelle { height: 100%; overflow: hidden; }
+.unten.lang > .quelle { -webkit-mask-image: linear-gradient(#000 55%, transparent 96%); mask-image: linear-gradient(#000 55%, transparent 96%); }
+.unten .mehr, .lese .zu { height: 30px; padding: 0 0.6rem; color: var(--knopf); background: var(--papier); border: 1px solid var(--knopf); border-radius: 2px; }
+.unten .mehr { position: absolute; right: 0; bottom: 0.6rem; }
+.unten .mehr:hover, .lese .zu:hover { text-decoration: none; }
+.lese { position: absolute; inset: 0; z-index: 2; background: var(--papier); overflow-y: auto; padding: 0.4rem 0 1rem; display: flex; flex-direction: column; gap: 1rem; }
+.lese .zu { align-self: flex-end; flex: none; position: sticky; top: 0; }
+.lese .quelle p { margin: 0 0 0.8rem; }
+@media (prefers-reduced-motion: no-preference) { .lese { animation: hoch 0.22s ease-out; } }
+@media (orientation: landscape) and (max-height: 520px) { .unten { height: auto; min-height: 0; } .lese { grid-column: 1 / 3; } }
+/* sehr schmale Schirme: die Kopfzeile bleibt einzeilig */
+header .titel, header nav a { white-space: nowrap; }
+@media (max-width: 359px) { header nav { gap: 0.7rem; } header .wip { font-size: 0.75em; } }

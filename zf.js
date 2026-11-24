@@ -42,6 +42,7 @@
   function durch(p, q) { var n = q[0] * q[0] + q[1] * q[1]; return [(p[0] * q[0] + p[1] * q[1]) / n, (p[1] * q[0] - p[0] * q[1]) / n]; }
 
   function netz(form, wechsel, fein) {                                 // Dreiecke als flache Liste, auf GROESSE normiert
+    if (form.kandidat) return window.ZFNETZ(form.kandidat, wechsel, fein);   // Flaeche aus der Auswahl (netze.js), nur im Artefakt
     var nu = form.nu * fein, nv = form.nv * fein, P = [], T = [], i, j, k;
     for (i = 0; i <= nu; i++) for (j = 0; j <= nv; j++) P.push(form.f(i / nu, j / nv));
     var lo = [1e9, 1e9, 1e9], hi = [-1e9, -1e9, -1e9];
@@ -109,7 +110,7 @@
     ["n", "grid", 60, 600, 10, function (v) { return v + " px"; }],
     ["fein", "mesh", 1, 4, 1, function (v) { return v + "×"; }]
   ];
-  var felder = [], unten = "", lagen = [];                              // unten: "" Text zum Werk, "regler"
+  var felder = [], unten = "", lagen = [], masse = [];                              // unten: "" Text zum Werk, "regler"
   function neu() { felder.forEach(function (f) { f(); }); werke.forEach(function (w) { w.bild(); }); }
   function el(tag, text, klasse) { var e = document.createElement(tag); if (text) e.textContent = text; if (klasse) e.className = klasse; return e; }
   function feld(fig, nr) {
@@ -117,7 +118,23 @@
     var buehne = el("div", "", "buehne"); cv.parentNode.insertBefore(buehne, cv); buehne.appendChild(cv);
     var bereich = el("div", "", "unten"), box = el("div", "", "regler"), teile = [];
     var art = fig.closest("article"), text = art && art.querySelector(".quelle");
-    if (text) bereich.appendChild(text);
+    var mehr = null, lese = null;
+    if (text) {
+      bereich.appendChild(text);
+      mehr = el("button", "more", "mehr"); mehr.type = "button"; mehr.hidden = true; bereich.appendChild(mehr);
+      lese = el("div", "", "lese"); lese.hidden = true;                 // der ganze Text, ueber Bild und Bildzeile geschoben
+      var zu = el("button", "close", "zu"), ganz = el("div", "", "quelle"); zu.type = "button"; ganz.innerHTML = text.innerHTML;
+      lese.appendChild(zu); lese.appendChild(ganz); fig.appendChild(lese);
+      mehr.addEventListener("click", function () { lese.hidden = false; zu.focus(); });
+      zu.addEventListener("click", function () { lese.hidden = true; mehr.focus(); });
+      lese.addEventListener("keydown", function (e) { if (e.key === "Escape") zu.click(); });
+    }
+    var messe = function () {                                          // passt der Text in den unteren Bereich?
+      if (!mehr) return;
+      var lang = unten === "" && text.scrollHeight > text.clientHeight + 2;
+      mehr.hidden = !lang; bereich.classList.toggle("lang", lang);
+    };
+    masse.push(messe);
     box.id = "regler" + nr;
     var ansicht = el("span", "", "ansicht"), modi = leiste.querySelectorAll("[data-modus]");      // 3d | plotter als ein Umschalter
     ansicht.setAttribute("role", "group"); ansicht.setAttribute("aria-label", "view");
@@ -144,7 +161,7 @@
     var zeile = el("div", "", "zeile"), kop = el("button"), zur = el("button", "reset");
     kop.type = "button"; zur.type = "button";
     kop.addEventListener("click", function () { alle.kopie = !alle.kopie; neu(); });
-    zur.addEventListener("click", function () { for (var k in START) alle[k] = START[k]; neu(); });
+    zur.addEventListener("click", function () { for (var k in START) alle[k] = START[k]; werke.forEach(function (w) { w.heim(); }); neu(); });   // auch der Blick geht auf die Standardansicht
     teile.push(function () { kop.textContent = alle.kopie ? "copy on" : "copy off"; kop.setAttribute("aria-pressed", alle.kopie ? "true" : "false"); });
     zeile.appendChild(kop); zeile.appendChild(zur); box.appendChild(zeile);
     bereich.appendChild(box); fig.appendChild(bereich);
@@ -152,6 +169,8 @@
       if (text) text.hidden = unten !== "";
       box.hidden = unten !== "regler";
       auf.setAttribute("aria-expanded", unten === "regler" ? "true" : "false");
+      bereich.classList.toggle("text", unten === ""); if (lese && unten !== "") lese.hidden = true;
+      messe();
     };
     lagen.push(lage); lage();
     var gleich = function () { teile.forEach(function (t) { t(); }); };
@@ -161,7 +180,7 @@
   // ---------------------------------------------------------------- ein Werk
   var werke = [];
   function Werk(fig) {
-    var form = FORMEN[fig.getAttribute("data-form")], cv = fig.querySelector("canvas");
+    var name = fig.getAttribute("data-form"), form = (window.ZFFORMEN && window.ZFFORMEN[name]) || FORMEN[name], cv = fig.querySelector("canvas");
     if (!form || !cv || !cv.getContext) return;
     var ctx = cv.getContext("2d");
     var AZ0 = form.az * PI / 180, EL0 = form.el * PI / 180;
@@ -326,13 +345,15 @@
     if (window.IntersectionObserver) new IntersectionObserver(function (es) { st.sichtbar = es[0].isIntersecting; }, { rootMargin: "100px" }).observe(cv);
 
     if (window.ResizeObserver) new ResizeObserver(groesse).observe(cv);          // die Buehne passt sich dem Fenster an
-    werke.push({ bild: bild, groesse: groesse, schritt: function () { if (st.auto && st.sichtbar) { st.az += 0.006; bild(); } } });
+    werke.push({ bild: bild, groesse: groesse, heim: function () { st.az = AZ0; st.el = EL0; st.auto = true; }, schritt: function () { if (st.auto && st.sichtbar) { st.az += 0.006; bild(); } } });
     groesse();
   }
 
   var figs = document.querySelectorAll("figure.werk[data-form]");
   for (var i = 0; i < figs.length; i++) Werk(figs[i]);
-  window.addEventListener("resize", function () { werke.forEach(function (w) { w.groesse(); }); });
+  function messeAlle() { masse.forEach(function (m) { m(); }); }
+  window.addEventListener("resize", function () { werke.forEach(function (w) { w.groesse(); }); messeAlle(); });
+  if (document.fonts && document.fonts.ready) document.fonts.ready.then(messeAlle);
 
   // ---------------------------------------------------------------- ein Werk zur Zeit, Wechsel mit Pfeilen, Adresse #name
   var blaetter = [];
@@ -343,7 +364,7 @@
   function zeige(k, fokus) {
     k = (k + blaetter.length) % blaetter.length;
     blaetter.forEach(function (b, j) { b.art.hidden = j !== k; });
-    werke.forEach(function (w) { w.groesse(); });
+    werke.forEach(function (w) { w.groesse(); }); messeAlle();
     if (fokus) { var kn = blaetter[k].art.querySelectorAll(".wahl button")[fokus > 0 ? 1 : 0]; if (kn) kn.focus(); }
     try { if (location.hash !== "#" + blaetter[k].name) history.replaceState(null, "", "#" + blaetter[k].name); } catch (e) {}
   }
