@@ -46,8 +46,8 @@
     var art = el("article"), fig = el("figure", null, "werk"), cv = el("canvas"), cap = el("figcaption"), sch = el("span", null, "schalter");
     fig.setAttribute("data-form", id); cv.width = 600; cv.height = 600;
     cv.setAttribute("aria-label", k.name + " fighting its own copy. Drag to rotate.");
-    [["3d", true], ["plotter", false]].forEach(function (m) {
-      var b = el("button", m[0]); b.type = "button"; b.setAttribute("data-modus", m[0]); b.setAttribute("aria-pressed", m[1] ? "true" : "false"); sch.appendChild(b);
+    [["3d", true, "3d"], ["plotter", false, "plotter"], ["rahmen", false, "framed"]].forEach(function (m) {
+      var b = el("button", m[2]); b.type = "button"; b.setAttribute("data-modus", m[0]); b.setAttribute("aria-pressed", m[1] ? "true" : "false"); sch.appendChild(b);
     });
     var name = el("span", titel); name.title = titel;
     cap.appendChild(name); cap.appendChild(sch); fig.appendChild(cv); fig.appendChild(cap); art.appendChild(fig);

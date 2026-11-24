@@ -15,6 +15,13 @@
   var BLAU = "#2d3c96", ROT = "#d7463c", FARBE = [[45, 60, 150], [215, 70, 60]], PAPIER = [251, 250, 247];
   var NEAR = 6, FAR = 400, GRAD = 1, TOL = 4e-3, DIST = 75.6, RADIUS = 23.5, GROESSE = 22;
   var alle = { bits: 16, kipp: 0.22, n: 140, hub: 0, fein: 1, kopie: true };   // gemeinsame Regler
+  var MM = { rahmen: 330, profil: 8, fenster: 190, px: 1.05, motiv: 160, schrift: 2.6, stift: 0.33, rand: 11 };   // gerahmtes Blatt, mm
+  var GLYPHEN = {                                                      // Strichschrift der Signatur (zfighting_signatur.py)
+    S: [[[4, 5], [3, 6], [1, 6], [0, 5], [0, 4], [1, 3], [3, 3], [4, 2], [4, 1], [3, 0], [1, 0], [0, 1]]],
+    A: [[[0, 0], [0, 4], [2, 6], [4, 4], [4, 0]], [[0, 2.5], [4, 2.5]]],
+    V: [[[0, 6], [2, 0], [4, 6]]], I: [[[0, 0], [0, 6]]], N: [[[0, 0], [0, 6], [4, 0], [4, 6]]],
+    O: [[[1, 0], [0, 1], [0, 5], [1, 6], [3, 6], [4, 5], [4, 1], [3, 0], [1, 0]]]
+  };
   var HUB = 12;                                                        // groesster Hub der Kopie (Radius des Koerpers: GROESSE)
   var PI = Math.PI;
 
@@ -188,13 +195,13 @@
     var ORIGINAL = null, KOPIE0 = null, KOPIE = null, kippAlt = null, hubAlt = null, feinAlt = null, NORM = [null, null];
     var wmax, best, team, drei, licht = [0, 0, 1];
 
-    function projiziere(V, n) {                                        // -> x, y in Bildpunkten, w = 1/Tiefe
+    function projiziere(V, n, zoom) {                                      // -> x, y in Bildpunkten, w = 1/Tiefe
       var ca = Math.cos(st.az), sa = Math.sin(st.az), ce = Math.cos(st.el), se = Math.sin(st.el);
       var ex = DIST * ce * ca, ey = DIST * ce * sa, ez = DIST * se;
       var fx = -ce * ca, fy = -ce * sa, fz = -se;
       var rx = fy, ry = -fx, rl = Math.hypot(rx, ry); rx /= rl; ry /= rl;               // rechts = f x (0,0,1)
       var ux = ry * fz, uy = -rx * fz, uz = rx * fy - ry * fx;                          // oben = r x f
-      var F = (n / 2 - 1.5) * Math.sqrt(DIST * DIST - RADIUS * RADIUS) / RADIUS;
+      var F = (zoom || 1) * (n / 2 - 1.5) * Math.sqrt(DIST * DIST - RADIUS * RADIUS) / RADIUS;
       var lx = -fx + 0.55 * ux - 0.45 * rx, ly = -fy + 0.55 * uy - 0.45 * ry, lz = -fz + 0.55 * uz, ll = Math.hypot(lx, ly, lz);
       licht = [lx / ll, ly / ll, lz / ll];                             // Licht von links oben hinter der Kamera
       var out = new Float64Array(V.length);
@@ -239,9 +246,11 @@
         }
       }
     }
-    function rechne() {
-      var n = alle.n;
-      if (!wmax || wmax.length !== n * n) { wmax = new Float64Array(n * n); best = new Float64Array(n * n); team = new Uint8Array(n * n); drei = new Int32Array(n * n); }
+    var puffer = {};                                                   // je Rastergroesse eigene Felder (framed rechnet in zwei festen Rastern)
+    function rechne(n, zoom) {
+      n = n || alle.n;
+      var pf = puffer[n] || (puffer[n] = { wmax: new Float64Array(n * n), best: new Float64Array(n * n), team: new Uint8Array(n * n), drei: new Int32Array(n * n) });
+      wmax = pf.wmax; best = pf.best; team = pf.team; drei = pf.drei;
       if (feinAlt !== alle.fein) {                                     // feineres Netz: mehr und kleinere Dreiecke
         ORIGINAL = netz(form, false, alle.fein); KOPIE0 = netz(form, true, alle.fein);
         NORM[0] = normalen(ORIGINAL); feinAlt = alle.fein; kippAlt = null;
@@ -253,7 +262,7 @@
         NORM[1] = normalen(KOPIE); kippAlt = alle.kipp; hubAlt = alle.hub;
       }
       wmax.fill(0); best.fill(Infinity); team.fill(0);
-      var p0 = projiziere(ORIGINAL, n), p1 = alle.kopie ? projiziere(KOPIE, n) : null;
+      var p0 = projiziere(ORIGINAL, n, zoom), p1 = alle.kopie ? projiziere(KOPIE, n, zoom) : null;
       raster(p0, n, 1, 1); if (p1) raster(p1, n, 2, 1);
       raster(p0, n, 1, 2); if (p1) raster(p1, n, 2, 2);                // Original zuerst: es gewinnt den Gleichstand
     }
@@ -278,7 +287,53 @@
       ctx.imageSmoothingEnabled = false;
       ctx.drawImage(klein, 0, 0, cv.width, cv.height);
     }
+    // Das Blatt gerahmt, wie plot3d_farbe/zfighting_bild.py (hoch) und wie im Kandidaten-Werkzeug. Masse in mm:
+    // Rahmen 330, Profil 8, Fenster 190, Bildpunkt 1.05; Motiv mittig im Fenster, hoechstens 158 x 150; SAVINO fest links unten.
+    function kasten(n) {
+      var x0 = n, x1 = -1, y0 = n, y1 = -1;
+      for (var j = 0; j < n; j++) for (var i = 0; i < n; i++) if (team[j * n + i]) { if (i < x0) x0 = i; if (i > x1) x1 = i; if (j < y0) y0 = j; if (j > y1) y1 = j; }
+      return x1 < 0 ? null : { x0: x0, x1: x1, y0: y0, y1: y1, b: x1 - x0 + 1, h: y1 - y0 + 1 };
+    }
+    function zeichneRahmen() {
+      var B = cv.width, wand = 18, q = B / (MM.rahmen + 2 * wand), o = wand * q, i, j, a, an;
+      function mm(v) { return o + v * q; }
+      ctx.setTransform(1, 0, 0, 1, 0, 0); ctx.shadowColor = "transparent"; ctx.globalAlpha = 1;
+      ctx.fillStyle = "#e1e0db"; ctx.fillRect(0, 0, B, B);
+      ctx.save(); ctx.shadowColor = "rgba(40,38,30,0.32)"; ctx.shadowBlur = 9 * q; ctx.shadowOffsetX = 2 * q; ctx.shadowOffsetY = 5 * q;
+      ctx.fillStyle = "#1e1e20"; ctx.fillRect(mm(0), mm(0), MM.rahmen * q, MM.rahmen * q); ctx.restore();
+      ctx.fillStyle = "#f9f8f4"; ctx.fillRect(mm(MM.profil), mm(MM.profil), (MM.rahmen - 2 * MM.profil) * q, (MM.rahmen - 2 * MM.profil) * q);
+      var f0 = (MM.rahmen - MM.fenster) / 2, fq = MM.fenster * q;
+      ctx.fillStyle = "#ffffff"; ctx.fillRect(mm(f0 - 1.4), mm(f0 - 1.4), fq + 2.8 * q, fq + 2.8 * q);  // Schraegschnitt
+      ctx.fillStyle = "#cfcdc6"; ctx.fillRect(mm(f0), mm(f0), fq, fq);                                  // Schatten der Kante
+      ctx.fillStyle = "#f3f2ed"; ctx.fillRect(mm(f0 + 0.7), mm(f0 + 0.9), fq - 0.7 * q, fq - 0.9 * q);  // Blatt
+      var N1 = 160, N2 = 216; rechne(N1, 1); var k = kasten(N1); if (!k) return;
+      var zoom = Math.min((MM.motiv - 2) / k.b, (MM.motiv - 10) / k.h);
+      rechne(N2, zoom * (N1 / 2 - 1.5) / (N2 / 2 - 1.5)); k = kasten(N2); if (!k) return;
+      var px = MM.px, x0 = f0 + (MM.fenster - k.b * px) / 2, y0 = f0 + (MM.fenster - k.h * px) / 2, c = px * q;
+      ctx.save(); ctx.beginPath(); ctx.rect(mm(f0), mm(f0), fq, fq); ctx.clip();
+      ctx.lineWidth = Math.max(0.55, MM.stift * q); ctx.lineCap = "butt"; ctx.globalAlpha = 0.92;
+      var X = mm(x0) - k.x0 * c, Y = mm(y0) - k.y0 * c;
+      ctx.strokeStyle = ROT; ctx.beginPath();                                                           // erst Rot, dann Blau, wie am Plotter
+      for (i = k.x0; i <= k.x1; i++) for (a = -1, j = k.y0; j <= k.y1 + 1; j++) {
+        an = j <= k.y1 && team[j * N2 + i] === 2; if (an && a < 0) a = j;
+        if (!an && a >= 0) { ctx.moveTo(X + (i + 0.5) * c, Y + a * c + c * 0.14); ctx.lineTo(X + (i + 0.5) * c, Y + j * c - c * 0.14); a = -1; }
+      }
+      ctx.stroke(); ctx.strokeStyle = BLAU; ctx.beginPath();
+      for (j = k.y0; j <= k.y1; j++) for (a = -1, i = k.x0; i <= k.x1 + 1; i++) {
+        an = i <= k.x1 && team[j * N2 + i] === 1; if (an && a < 0) a = i;
+        if (!an && a >= 0) { ctx.moveTo(X + a * c + c * 0.14, Y + (j + 0.5) * c); ctx.lineTo(X + i * c - c * 0.14, Y + (j + 0.5) * c); a = -1; }
+      }
+      ctx.stroke();
+      var e = MM.schrift / 6, sx = f0 + MM.rand, grund = f0 + MM.fenster - MM.rand;                     // Signatur
+      ctx.lineJoin = "round"; ctx.lineCap = "round"; ctx.beginPath();
+      "SAVINO".split("").forEach(function (z) {
+        GLYPHEN[z].forEach(function (zug) { zug.forEach(function (p, n) { ctx[n ? "lineTo" : "moveTo"](mm(sx + p[0] * e), mm(grund - p[1] * e)); }); });
+        sx += ((z === "I" ? 0 : 4) + 1.7) * e;
+      });
+      ctx.stroke(); ctx.restore();
+    }
     function zeichne() {
+      if (st.modus === "rahmen") return;                               // zeichneRahmen rechnet selbst
       if (st.modus === "3d") return zeichne3d();
       var n = alle.n, B = cv.width, c = B / n, i, j, a, an;
       ctx.clearRect(0, 0, B, B);
@@ -305,10 +360,11 @@
       ctx.stroke();
     }
     var offen = false;
-    function bild() { if (offen || !cv.clientWidth) return; offen = true; requestAnimationFrame(function () { offen = false; rechne(); zeichne(); }); }
+    function bild() { if (offen || !cv.clientWidth) return; offen = true; requestAnimationFrame(function () { offen = false; if (st.modus === "rahmen") zeichneRahmen(); else { rechne(); zeichne(); } }); }
     function groesse() {
-      var b = Math.round(cv.clientWidth * Math.min(window.devicePixelRatio || 1, 2));
+      var rahmen = st.modus === "rahmen", b = Math.round(cv.clientWidth * Math.min(window.devicePixelRatio || 1, rahmen ? 3 : 2));
       if (b <= 0) return;                                              // verstecktes Werk
+      cv.style.imageRendering = rahmen ? "auto" : "";
       if (cv.width !== b) { cv.width = b; cv.height = b; }
       bild();
     }
@@ -326,7 +382,7 @@
       st.el = Math.max(-1.45, Math.min(1.45, zieh.el + (e.clientY - zieh.y) * k));
       bild();
     });
-    function los() { if (zieh) st.auto = true; zieh = null; cv.classList.remove("zieht"); }      // nach dem Loslassen dreht es weiter
+    function los() { if (zieh) st.auto = st.modus !== "rahmen"; zieh = null; cv.classList.remove("zieht"); }      // nach dem Loslassen dreht es weiter
     cv.addEventListener("pointerup", los); cv.addEventListener("pointercancel", los);
     cv.tabIndex = 0;
     cv.addEventListener("keydown", function (e) {
@@ -336,16 +392,17 @@
     });
     var knoepfe = fig.querySelectorAll("[data-modus]");
     function modus(m) {
+      if (m === "rahmen") { st.az = AZ0; st.el = EL0; st.auto = false; } else if (st.modus === "rahmen") st.auto = true;   // das gerahmte Blatt steht in der Standardansicht still
       st.modus = m;
       for (var i = 0; i < knoepfe.length; i++) knoepfe[i].setAttribute("aria-pressed", knoepfe[i].getAttribute("data-modus") === m ? "true" : "false");
-      bild();
+      groesse(); bild();
     }
     for (var b = 0; b < knoepfe.length; b++) knoepfe[b].addEventListener("click", function () { modus(this.getAttribute("data-modus")); });
     feld(fig, werke.length);
     if (window.IntersectionObserver) new IntersectionObserver(function (es) { st.sichtbar = es[0].isIntersecting; }, { rootMargin: "100px" }).observe(cv);
 
     if (window.ResizeObserver) new ResizeObserver(groesse).observe(cv);          // die Buehne passt sich dem Fenster an
-    werke.push({ bild: bild, groesse: groesse, heim: function () { st.az = AZ0; st.el = EL0; st.auto = true; }, schritt: function () { if (st.auto && st.sichtbar) { st.az += 0.006; bild(); } } });
+    werke.push({ bild: bild, groesse: groesse, heim: function () { st.az = AZ0; st.el = EL0; st.auto = st.modus !== "rahmen"; }, schritt: function () { if (st.auto && st.sichtbar) { st.az += 0.006; bild(); } } });
     groesse();
   }
 
