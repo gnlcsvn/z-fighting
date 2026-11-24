@@ -37,12 +37,16 @@
   window.ZFFORMEN = {};
   function el(tag, text, klasse) { var e = document.createElement(tag); if (text != null) e.textContent = text; if (klasse) e.className = klasse; return e; }
   function zwei(n) { return (n < 10 ? "0" : "") + n; }
-  var nr = 0;
+  var nr = 0, gesamt = A.ids.filter(function (id) { return nach[id]; }).length;
   A.ids.forEach(function (id) {
     var k = nach[id]; if (!k) return;
     var s = (A.sicht && A.sicht[id]) || [k.az == null ? -60 : k.az, k.el == null ? 30 : k.el];
     window.ZFFORMEN[id] = { az: s[0], el: s[1], kandidat: k };
-    var titel = zwei(++nr) + " " + k.name;
+    var titel = k.name, da = (A.geplottet || []).indexOf(id) >= 0;
+    var serie = zwei(++nr) + "/" + zwei(gesamt);
+    var num = el("span", serie, "nr"), marke = el("i", null, da ? "marke da" : "marke");   // Nummer in der Serie, Quadrat gefuellt = geplottet
+    window.ZFFORMEN[id].serie = serie;
+    num.appendChild(marke); num.title = da ? "plotted" : "not plotted yet"; num.setAttribute("aria-label", "number " + nr + " of " + gesamt + ", " + num.title);
     var art = el("article"), fig = el("figure", null, "werk"), cv = el("canvas"), cap = el("figcaption"), sch = el("span", null, "schalter");
     fig.setAttribute("data-form", id); cv.width = 600; cv.height = 600;
     cv.setAttribute("aria-label", k.name + " fighting its own copy. Drag to rotate.");
@@ -50,9 +54,13 @@
       var b = el("button", m[2]); b.type = "button"; b.setAttribute("data-modus", m[0]); b.setAttribute("aria-pressed", m[1] ? "true" : "false"); sch.appendChild(b);
     });
     var name = el("span", titel); name.title = titel;
-    cap.appendChild(name); cap.appendChild(sch); fig.appendChild(cv); fig.appendChild(cap); art.appendChild(fig);
+    cap.appendChild(name); cap.appendChild(num); cap.appendChild(sch); fig.appendChild(cv); fig.appendChild(cap); art.appendChild(fig);
     var q = el("div", null, "quelle"), t = TEXTE[id];
     if (t) { q.appendChild(el("p", t[0])); q.appendChild(el("p", t[1], "leise")); }
+    var stand = el("p", null, "leise stand");                            // sagt, was das Quadrat heisst
+    stand.appendChild(el("i", null, da ? "marke da" : "marke"));
+    stand.appendChild(document.createTextNode(da ? "plotted. each surface is plotted once." : "not plotted yet. each is plotted once."));
+    q.appendChild(stand);
     art.appendChild(q); main.appendChild(art);
   });
 })();

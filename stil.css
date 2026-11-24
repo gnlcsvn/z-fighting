@@ -149,7 +149,15 @@ html.frei body { height: auto; min-height: 100dvh; }
 .seite figure { margin: 2.2rem 0; }
 .seite figure img, .seite figure video { display: block; width: 100%; height: auto; }
 .seite figcaption { display: block; padding-top: 0.5rem; color: var(--leise); }
-@media (max-width: 640px) { .seite figure { margin-inline: -1.25rem; } .seite figcaption { padding-inline: 1.25rem; } }
+.seite figure img, .seite figure video { max-height: 88dvh; width: auto; max-width: 100%; }   /* Hochformate nie hoeher als der Schirm */
+.seite .reihe { display: grid; grid-template-columns: repeat(auto-fit, minmax(0, 1fr)); gap: 0.6rem; margin: 2.2rem 0; align-items: start; }
+.seite .reihe figure { margin: 0; }
+.seite .reihe figure img, .seite .reihe figure video { width: 100%; max-height: none; }
+@media (max-width: 640px) {
+  .seite figure, .seite .reihe { margin-inline: -1.25rem; } .seite .reihe figure { margin-inline: 0; }
+  .seite figure img, .seite figure video { width: 100%; max-height: none; }
+  .seite figcaption { padding-inline: 1.25rem; }
+}
 .seite .blau { color: var(--blau); } .seite .rot { color: var(--rot); }
 
 /* Hinweis in der Mitte der Kopfzeile, solange die Seite im Aufbau ist. */
@@ -185,3 +193,13 @@ figcaption { flex-wrap: wrap; }
 /* sehr schmale Schirme: die Kopfzeile bleibt einzeilig */
 header .titel, header nav a { white-space: nowrap; }
 @media (max-width: 359px) { header nav { gap: 0.7rem; } header .wip { font-size: 0.75em; } }
+
+/* Nummer in der Serie und Quadrat rechts neben dem Namen (seit 2026-11-24): gefuellt = dieses Blatt ist geplottet.
+   Das Quadrat steht auf der Grundlinie und ist so hoch wie die Ziffern (--ziffer, von zf.js in ganzen Pixeln gemessen). */
+.wahl .nr { flex: none; margin-left: 0.8rem; color: var(--leise); overflow: visible; }
+.marke { display: inline-block; flex: none; width: var(--ziffer, 9px); height: var(--ziffer, 9px); box-sizing: border-box; border: 1px solid var(--knopf); vertical-align: baseline; }
+.marke.da { background: var(--knopf); }
+.nr .marke { margin-left: 0.55em; }
+.stand .marke { margin-right: 0.6em; border-color: var(--leise); }
+.stand .marke.da { background: var(--leise); }
+.quelle p.stand { margin-bottom: 0; }

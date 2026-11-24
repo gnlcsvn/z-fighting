@@ -1,11 +1,15 @@
 /* Auswahl fuer das Website-Artefakt, uebertragen aus dem Kandidaten-Werkzeug (zfighting/kandidaten).
    ids: die Flaechen mit Urteil "in", in der Reihenfolge von flaechen.js. sicht: Standardperspektive in Grad (az, el);
    fehlt sie, gilt az/el aus flaechen.js. Neu uebertragen: Ablage des Kandidaten-Artefakts lesen (auswahl/stand)
-   oder "Auswahl als Text" einfuegen, diese Datei neu schreiben, python3 baue_artefakt.py, neu veroeffentlichen. */
+   oder "Auswahl als Text" einfuegen, diese Datei neu schreiben, python3 baue_artefakt.py, neu veroeffentlichen.
+   geplottet: ids der Flaechen, deren Blatt es in echt gibt (jede wird nur einmal geplottet). Die Website zeigt je Werk
+   die Nummer in der Serie und ein Quadrat, gefuellt = geplottet. Die Nummer ist der Platz in ids: sobald ein Blatt
+   existiert, die Reihenfolge von ids nicht mehr aendern, sonst verschieben sich die Nummern. */
 window.AUSWAHL = {
   stand: "2026-11-24",
   ids: ["klein", "boy", "bottle", "eversion", "pinkall", "cinquefoil", "listing", "enneper", "enneper2", "helicoid", "henneberg", "richmond",
     "scherk1", "gyroid", "schwarzd", "breather", "dini", "sievert", "cayley", "togliatti", "endrass", "calabi", "lorenz", "shell", "superellipsoid"],
+  geplottet: ["klein"],
   sicht: {
     klein: [-60, 28], boy: [-102, 35], bottle: [-100, 27], eversion: [179, -42], pinkall: [-123, 27], trefoil: [-80, 55], cinquefoil: [-47, 57],
     listing: [-129, 42], enneper: [-91, 30], enneper2: [-29, 54], henneberg: [-132, -12], richmond: [-141, 5], scherk1: [-105, -59],

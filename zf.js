@@ -20,8 +20,21 @@
     S: [[[4, 5], [3, 6], [1, 6], [0, 5], [0, 4], [1, 3], [3, 3], [4, 2], [4, 1], [3, 0], [1, 0], [0, 1]]],
     A: [[[0, 0], [0, 4], [2, 6], [4, 4], [4, 0]], [[0, 2.5], [4, 2.5]]],
     V: [[[0, 6], [2, 0], [4, 6]]], I: [[[0, 0], [0, 6]]], N: [[[0, 0], [0, 6], [4, 0], [4, 6]]],
-    O: [[[1, 0], [0, 1], [0, 5], [1, 6], [3, 6], [4, 5], [4, 1], [3, 0], [1, 0]]]
+    O: [[[1, 0], [0, 1], [0, 5], [1, 6], [3, 6], [4, 5], [4, 1], [3, 0], [1, 0]]],
+    "1": [[[1, 5], [2, 6], [2, 0]]],
+    "2": [[[0, 5], [1, 6], [3, 6], [4, 5], [4, 4], [0, 0], [4, 0]]],
+    "3": [[[0, 5], [1, 6], [3, 6], [4, 5], [4, 4], [3, 3], [1.5, 3]], [[3, 3], [4, 2], [4, 1], [3, 0], [1, 0], [0, 1]]],
+    "4": [[[3, 0], [3, 6], [0, 2], [4, 2]]],
+    "5": [[[4, 6], [0, 6], [0, 3.3], [3, 3.3], [4, 2.3], [4, 1], [3, 0], [1, 0], [0, 1]]],
+    "6": [[[4, 5], [3, 6], [1, 6], [0, 5], [0, 1], [1, 0], [3, 0], [4, 1], [4, 2.3], [3, 3.3], [0, 3.3]]],
+    "7": [[[0, 6], [4, 6], [1.5, 0]]],
+    "8": [[[1, 3], [0, 4], [0, 5], [1, 6], [3, 6], [4, 5], [4, 4], [3, 3], [1, 3], [0, 2], [0, 1], [1, 0], [3, 0], [4, 1], [4, 2], [3, 3]]],
+    "9": [[[0, 1], [1, 0], [3, 0], [4, 1], [4, 5], [3, 6], [1, 6], [0, 5], [0, 3.7], [1, 2.7], [4, 2.7]]],
+    "/": [[[0, -0.6], [3.4, 6.6]]]
   };
+  GLYPHEN["0"] = GLYPHEN.O;
+  var BREITE = { I: 0, "/": 3.4, "1": 2.6 }, SPERRUNG = 1.7;            // wie zfighting_signatur.py
+  function schriftbreite(text) { var b = 0; text.split("").forEach(function (z) { b += (BREITE[z] == null ? 4 : BREITE[z]) + SPERRUNG; }); return b - SPERRUNG; }
   var HUB = 12;                                                        // groesster Hub der Kopie (Radius des Koerpers: GROESSE)
   var PI = Math.PI;
 
@@ -326,10 +339,14 @@
       ctx.stroke();
       var e = MM.schrift / 6, sx = f0 + MM.rand, grund = f0 + MM.fenster - MM.rand;                     // Signatur
       ctx.lineJoin = "round"; ctx.lineCap = "round"; ctx.beginPath();
-      "SAVINO".split("").forEach(function (z) {
-        GLYPHEN[z].forEach(function (zug) { zug.forEach(function (p, n) { ctx[n ? "lineTo" : "moveTo"](mm(sx + p[0] * e), mm(grund - p[1] * e)); }); });
-        sx += ((z === "I" ? 0 : 4) + 1.7) * e;
-      });
+      function schreibe(text, x) {
+        text.split("").forEach(function (z) {
+          (GLYPHEN[z] || []).forEach(function (zug) { zug.forEach(function (p, n) { ctx[n ? "lineTo" : "moveTo"](mm(x + p[0] * e), mm(grund - p[1] * e)); }); });
+          x += ((BREITE[z] == null ? 4 : BREITE[z]) + SPERRUNG) * e;
+        });
+      }
+      schreibe("SAVINO", sx);
+      if (form.serie) schreibe(form.serie, f0 + MM.fenster - MM.rand - schriftbreite(form.serie) * e);   // Nummer in der Serie, rechts unten
       ctx.stroke(); ctx.restore();
     }
     function zeichne() {
@@ -408,7 +425,15 @@
 
   var figs = document.querySelectorAll("figure.werk[data-form]");
   for (var i = 0; i < figs.length; i++) Werk(figs[i]);
-  function messeAlle() { masse.forEach(function (m) { m(); }); }
+  function ziffer() {                                                  // Hoehe der Ziffern in ganzen Pixeln -> Kantenlaenge des Quadrats (.marke)
+    try {
+      var st = getComputedStyle(document.body), c = document.createElement("canvas").getContext("2d");
+      c.font = st.fontSize + " " + st.fontFamily;
+      var h = Math.round(c.measureText("0").actualBoundingBoxAscent);
+      if (h > 4) document.documentElement.style.setProperty("--ziffer", h + "px");
+    } catch (e) {}
+  }
+  function messeAlle() { ziffer(); masse.forEach(function (m) { m(); }); }
   window.addEventListener("resize", function () { werke.forEach(function (w) { w.groesse(); }); messeAlle(); });
   if (document.fonts && document.fonts.ready) document.fonts.ready.then(messeAlle);
 
@@ -438,7 +463,8 @@
         kn.addEventListener("click", function () { zeige(k + r[0], r[0]); });
         wahl.appendChild(kn);
       });
-      b.kopf.parentNode.insertBefore(wahl, b.kopf); wahl.appendChild(b.kopf);
+      var nr = b.kopf.parentNode.querySelector(".nr");
+      b.kopf.parentNode.insertBefore(wahl, b.kopf); wahl.appendChild(b.kopf); if (nr) wahl.appendChild(nr);
     });
     window.addEventListener("hashchange", ausAdresse);
     ausAdresse();
